@@ -9,19 +9,26 @@ import (
 )
 
 const (
-	SuccessFulListTopicMessage = "Successfully listed topics"
+	SuccessFulListTopicMessage = "Successfully listed all topics"
 )
 
+// handler handles the topic related HTTP requests.
+// It is responsible for translating HTTP requests into service calls and formatting service
+// responses into HTTP responses.
 type handler struct {
 	service Service
 }
 
+// NewHandler creates a new topic handler.
 func NewHandler(service Service) *handler {
 	return &handler{
 		service: service,
 	}
 }
 
+// ListTopics handles GET /topics endpoints.
+// It calls the topic service to return all topics and serializes the result into a JSON HTTP
+// response.
 func (h *handler) ListTopics(w http.ResponseWriter, r *http.Request) {
 	topics, err := h.service.ListTopics(r.Context())
 	if err != nil {

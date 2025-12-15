@@ -12,20 +12,25 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+// application contains the configuration and database connection for the web server.
 type application struct {
 	config config
 	db     *pgx.Conn
 }
 
+// config contains the server address string and database configurations.
 type config struct {
 	addr string
 	db   dbConfig
 }
 
+// dbConfig contains the connection string for the PostgreSQL database.
 type dbConfig struct {
 	dsn string
 }
 
+// mount sets up the HTTP router, middleware, application routes.
+// It returns a chi.Router that can be used by the HTTP server.
 func (app *application) mount() http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
@@ -33,11 +38,13 @@ func (app *application) mount() http.Handler {
 
 	topicService := topics.NewService(repo.New(app.db))
 	topicHandler := topics.NewHandler(topicService)
-	r.Get("/topics", topicHandler.ListTopics)
+	topics.Routes(r, topicHandler)
 
 	return r
 }
 
+// run starts the HTTP server with the given handler.
+// It sets read, write, and idle timeouts and blocks until the server stops or an error occurs.
 func (app *application) run(h http.Handler) error {
 	svr := &http.Server{
 		Addr:         app.config.addr,

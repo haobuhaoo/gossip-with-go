@@ -9,6 +9,39 @@ import (
 	"context"
 )
 
+const createTopic = `-- name: CreateTopic :one
+INSERT INTO Topics (user_iD, title) VALUES ($1, $2) RETURNING topic_id, user_id, title, created_at
+`
+
+type CreateTopicParams struct {
+	UserID int64  `json:"user_id"`
+	Title  string `json:"title"`
+}
+
+func (q *Queries) CreateTopic(ctx context.Context, arg CreateTopicParams) (Topic, error) {
+	row := q.db.QueryRow(ctx, createTopic, arg.UserID, arg.Title)
+	var i Topic
+	err := row.Scan(
+		&i.TopicID,
+		&i.UserID,
+		&i.Title,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const deleteTopic = `-- name: DeleteTopic :execrows
+DELETE FROM Topics WHERE topic_id = $1
+`
+
+func (q *Queries) DeleteTopic(ctx context.Context, topicID int64) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteTopic, topicID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const findTopicByID = `-- name: FindTopicByID :one
 SELECT topic_id, user_id, title, created_at FROM Topics WHERE topic_id = $1
 `
@@ -52,4 +85,25 @@ func (q *Queries) ListTopics(ctx context.Context) ([]Topic, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateTopic = `-- name: UpdateTopic :one
+UPDATE Topics SET title = $2 WHERE topic_id = $1 RETURNING topic_id, user_id, title, created_at
+`
+
+type UpdateTopicParams struct {
+	TopicID int64  `json:"topic_id"`
+	Title   string `json:"title"`
+}
+
+func (q *Queries) UpdateTopic(ctx context.Context, arg UpdateTopicParams) (Topic, error) {
+	row := q.db.QueryRow(ctx, updateTopic, arg.TopicID, arg.Title)
+	var i Topic
+	err := row.Scan(
+		&i.TopicID,
+		&i.UserID,
+		&i.Title,
+		&i.CreatedAt,
+	)
+	return i, err
 }

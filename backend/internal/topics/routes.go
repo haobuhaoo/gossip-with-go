@@ -7,5 +7,9 @@ import "github.com/go-chi/chi/v5"
 func Routes(router chi.Router, h *handler) {
 	router.Route("/topics", func(r chi.Router) {
 		r.Get("/", h.ListTopics)
+		r.Get("/{id}", h.FindTopicByID)
+		r.Post("/", h.CreateTopic)
+		r.Put("/{id}", h.UpdateTopic)
+		r.Delete("/{id}", h.DeleteTopic)
 	})
 }

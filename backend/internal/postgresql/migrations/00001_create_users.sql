@@ -2,7 +2,7 @@
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS Users (
     user_id BIGSERIAL PRIMARY KEY,
-    name TEXT NOT NULL
+    name TEXT UNIQUE NOT NULL
 );
 -- +goose StatementEnd
 

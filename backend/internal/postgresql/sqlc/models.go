@@ -8,6 +8,25 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Comment struct {
+	CommentID   int64              `json:"comment_id"`
+	UserID      int64              `json:"user_id"`
+	PostID      int64              `json:"post_id"`
+	Description string             `json:"description"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+type Post struct {
+	PostID      int64              `json:"post_id"`
+	TopicID     int64              `json:"topic_id"`
+	UserID      int64              `json:"user_id"`
+	Title       string             `json:"title"`
+	Description string             `json:"description"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Topic struct {
 	TopicID   int64              `json:"topic_id"`
 	UserID    int64              `json:"user_id"`

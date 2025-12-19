@@ -1,3 +1,4 @@
+-- Topics Queries
 -- name: ListTopics :many
 SELECT * FROM Topics ORDER BY title;
 
@@ -5,10 +6,48 @@ SELECT * FROM Topics ORDER BY title;
 SELECT * FROM Topics WHERE topic_id = $1;
 
 -- name: CreateTopic :one
-INSERT INTO Topics (user_iD, title) VALUES ($1, $2) RETURNING *;
+INSERT INTO Topics (user_id, title) VALUES ($1, $2) RETURNING *;
 
 -- name: UpdateTopic :one
 UPDATE Topics SET title = $2 WHERE topic_id = $1 RETURNING *;
 
 -- name: DeleteTopic :execrows
 DELETE FROM Topics WHERE topic_id = $1;
+
+-- Posts Queries
+-- name: ListPosts :many
+SELECT * FROM Posts ORDER BY updated_at DESC;
+
+-- name: FindPostByID :one
+SELECT * FROM Posts WHERE post_id = $1;
+
+-- name: CreatePost :one
+INSERT INTO Posts (topic_id, user_id, title, description) VALUES ($1, $2, $3, $4) RETURNING *;
+
+-- name: UpdatePostTitle :one
+UPDATE Posts SET title = $2, updated_at = now() WHERE post_id = $1 RETURNING *;
+
+-- name: UpdatePostDescription :one
+UPDATE Posts SET description = $2, updated_at = now() WHERE post_id = $1 RETURNING *;
+
+-- name: UpdatePostStatus :one
+UPDATE Posts SET updated_at = now() WHERE post_id = $1 RETURNING *;
+
+-- name: DeletePost :execrows
+DELETE FROM Posts WHERE post_id = $1;
+
+-- Comments Queries
+-- name: ListComments :many
+SELECT * FROM Comments ORDER BY updated_at DESC;
+
+-- name: FindCommentByID :one
+SELECT * FROM Comments WHERE comment_id = $1;
+
+-- name: CreateComment :one
+INSERT INTO Comments (user_id, post_id, description) VALUES ($1, $2, $3) RETURNING *;
+
+-- name: UpdateComment :one
+UPDATE Comments SET description = $2, updated_at = now() WHERE comment_id = $1 RETURNING *;
+
+-- name: DeleteComment :execrows
+DELETE FROM Comments WHERE Comment_id = $1;

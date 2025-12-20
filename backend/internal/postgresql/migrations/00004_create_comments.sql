@@ -2,8 +2,8 @@
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS Comments (
     comment_id BIGSERIAL PRIMARY KEY,
-    user_id BIGSERIAL NOT NULL,
-    post_id BIGSERIAL NOT NULL,
+    user_id BIGINT NOT NULL,
+    post_id BIGINT NOT NULL,
     description TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),

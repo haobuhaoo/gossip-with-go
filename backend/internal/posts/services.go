@@ -5,6 +5,7 @@ import (
 
 	"github.com/haobuhaoo/gossip-with-go/internal/helper"
 	repo "github.com/haobuhaoo/gossip-with-go/internal/postgresql/sqlc"
+	"github.com/haobuhaoo/gossip-with-go/internal/topics"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -21,9 +22,14 @@ func NewService(repo *repo.Queries) Service {
 	}
 }
 
-// ListPosts returns all posts from the database.
-func (s *svc) ListPosts(ctx context.Context) ([]repo.Post, error) {
-	return s.repo.ListPosts(ctx)
+// FindPostsByTopic returns all posts of the given topic id from the database.
+func (s *svc) FindPostsByTopic(ctx context.Context, id int64) ([]repo.Post, error) {
+	_, err := s.repo.FindTopicByID(ctx, id)
+	if err != nil {
+		return []repo.Post{}, topics.ErrTopicNotFound
+	}
+
+	return s.repo.FindPostsByTopic(ctx, id)
 }
 
 // FindPostByID returns a specific post identified by id from the database.
@@ -66,7 +72,6 @@ func (s *svc) UpdatePost(ctx context.Context, arg repo.UpdatePostParams) (repo.P
 			Title:  arg.Title,
 		}
 		post, err = s.UpdatePostTitle(ctx, updateTitle)
-
 	} else if arg.Description != "" {
 		updateDesc := repo.UpdatePostDescriptionParams{
 			PostID:      arg.PostID,
@@ -101,6 +106,7 @@ func (s *svc) UpdatePostDescription(ctx context.Context, arg repo.UpdatePostDesc
 }
 
 // DeletePost deletes the post given by the id from the database.
+// It deletes all comments under that post too.
 func (s *svc) DeletePost(ctx context.Context, id int64) error {
 	delRows, err := s.repo.DeletePost(ctx, id)
 	if err != nil {

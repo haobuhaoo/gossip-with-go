@@ -9,16 +9,17 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/haobuhaoo/gossip-with-go/internal/helper"
 	repo "github.com/haobuhaoo/gossip-with-go/internal/postgresql/sqlc"
+	"github.com/haobuhaoo/gossip-with-go/internal/topics"
 )
 
 const (
-	InvalidPostIdMessage        = "Invalid post id"
-	InvalidRequestBodyMessage   = "Required fields missing"
-	SuccessfulListPostMessage   = "Successfully listed all posts"
-	SuccessfulFindPostMessage   = "Successfully find post"
-	SuccessfulCreatePostMessage = "Successfully created post"
-	SuccessfulUpdatePostMessage = "Successfully updated post"
-	SuccessfulDeletePostMessage = "Successfully deleted post"
+	InvalidPostIdMessage             = "Invalid post id"
+	InvalidRequestBodyMessage        = "Required fields missing"
+	SuccessfulFindPostByTopicMessage = "Successfully listed all posts"
+	SuccessfulFindPostByIdMessage    = "Successfully find post"
+	SuccessfulCreatePostMessage      = "Successfully created post"
+	SuccessfulUpdatePostMessage      = "Successfully updated post"
+	SuccessfulDeletePostMessage      = "Successfully deleted post"
 )
 
 // handler handles the post related HTTP requests.
@@ -35,12 +36,24 @@ func NewHandler(service Service) *handler {
 	}
 }
 
-// ListPosts handles GET /posts requests.
-// It calls the post service to return all posts and serializes the result into a JSON HTTP
-// response.
-func (h *handler) ListPosts(w http.ResponseWriter, r *http.Request) {
-	posts, err := h.service.ListPosts(r.Context())
+// FindPostsByTopic handles GET /posts/all/{topicId} requests.
+// It parses the topicId string, and passes it to the post service to return all posts for that topic
+// and serializes the result into a JSON HTTP response.
+func (h *handler) FindPostsByTopic(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "topicId")
+	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
+		http.Error(w, topics.InvalidTopicIdMessage, http.StatusBadRequest)
+		return
+	}
+
+	posts, err := h.service.FindPostsByTopic(r.Context(), id)
+	if err != nil {
+		if err == topics.ErrTopicNotFound {
+			http.Error(w, topics.InvalidTopicIdMessage, http.StatusBadRequest)
+			return
+		}
+
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -51,7 +64,7 @@ func (h *handler) ListPosts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := helper.ParseResponseDataAndMessage(jsonPost, SuccessfulListPostMessage)
+	response := helper.ParseResponseDataAndMessage(jsonPost, SuccessfulFindPostByTopicMessage)
 	helper.Write(w, response)
 }
 
@@ -83,7 +96,7 @@ func (h *handler) FindPostByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := helper.ParseResponseDataAndMessage(jsonPost, SuccessfulFindPostMessage)
+	response := helper.ParseResponseDataAndMessage(jsonPost, SuccessfulFindPostByIdMessage)
 	helper.Write(w, response)
 }
 
@@ -145,7 +158,7 @@ func (h *handler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 	var req UpdatePostRequest
 	err = helper.Read(r, &req)
 	if err != nil {
-		http.Error(w, InvalidRequestBodyMessage, http.StatusConflict)
+		http.Error(w, InvalidRequestBodyMessage, http.StatusBadRequest)
 		return
 	}
 
@@ -190,9 +203,7 @@ func (h *handler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 
 // isValidPostReqBody returns true if both title and description of the request body are not empty.
 func isValidPostReqBody(data UpdatePostRequest) bool {
-	title := data.Title
-	desc := data.Description
-	if title == "" && desc == "" {
+	if data.Title == "" && data.Description == "" {
 		return false
 	}
 	return true

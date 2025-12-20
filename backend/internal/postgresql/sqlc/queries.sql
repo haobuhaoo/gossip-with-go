@@ -15,8 +15,8 @@ UPDATE Topics SET title = $2 WHERE topic_id = $1 RETURNING *;
 DELETE FROM Topics WHERE topic_id = $1;
 
 -- Posts Queries
--- name: ListPosts :many
-SELECT * FROM Posts ORDER BY updated_at DESC;
+-- name: FindPostsByTopic :many
+SELECT * FROM Posts WHERE topic_id = $1 ORDER BY updated_at DESC;
 
 -- name: FindPostByID :one
 SELECT * FROM Posts WHERE post_id = $1;
@@ -39,21 +39,15 @@ UPDATE Posts SET updated_at = now() WHERE post_id = $1 RETURNING *;
 -- name: DeletePost :execrows
 DELETE FROM Posts WHERE post_id = $1;
 
--- name: DeletePostByTopic :execrows
-DELETE FROM Posts WHERE topic_id = $1;
-
 -- Comments Queries
--- name: ListComments :many
-SELECT * FROM Comments ORDER BY updated_at DESC;
-
--- name: FindCommentByID :one
-SELECT * FROM Comments WHERE comment_id = $1;
+-- name: FindCommentsByPost :many
+SELECT * FROM Comments WHERE post_id = $1 ORDER BY updated_at DESC;
 
 -- name: CreateComment :one
 INSERT INTO Comments (user_id, post_id, description) VALUES ($1, $2, $3) RETURNING *;
 
 -- name: UpdateComment :one
-UPDATE Comments SET description = $2, updated_at = now() WHERE comment_id = $1 RETURNING *;
+UPDATE Comments SET description = $3, updated_at = now() WHERE comment_id = $1 AND post_id = $2 RETURNING *;
 
 -- name: DeleteComment :execrows
-DELETE FROM Comments WHERE Comment_id = $1;
+DELETE FROM Comments WHERE comment_id = $1;

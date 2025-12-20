@@ -9,7 +9,7 @@ import (
 // Service defines the domain logic for post related operations.
 // It is responsible for enforcing application rules and making database calls.
 type Service interface {
-	ListPosts(ctx context.Context) ([]repo.Post, error)
+	FindPostsByTopic(ctx context.Context, id int64) ([]repo.Post, error)
 	FindPostByID(ctx context.Context, id int64) (repo.Post, error)
 	CreatePost(ctx context.Context, arg repo.CreatePostParams) (repo.Post, error)
 	UpdatePost(ctx context.Context, arg repo.UpdatePostParams) (repo.Post, error)

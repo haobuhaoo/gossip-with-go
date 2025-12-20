@@ -86,7 +86,7 @@ func (q *Queries) CreateTopic(ctx context.Context, arg CreateTopicParams) (Topic
 }
 
 const deleteComment = `-- name: DeleteComment :execrows
-DELETE FROM Comments WHERE Comment_id = $1
+DELETE FROM Comments WHERE comment_id = $1
 `
 
 func (q *Queries) DeleteComment(ctx context.Context, commentID int64) (int64, error) {
@@ -109,18 +109,6 @@ func (q *Queries) DeletePost(ctx context.Context, postID int64) (int64, error) {
 	return result.RowsAffected(), nil
 }
 
-const deletePostByTopic = `-- name: DeletePostByTopic :execrows
-DELETE FROM Posts WHERE topic_id = $1
-`
-
-func (q *Queries) DeletePostByTopic(ctx context.Context, topicID int64) (int64, error) {
-	result, err := q.db.Exec(ctx, deletePostByTopic, topicID)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected(), nil
-}
-
 const deleteTopic = `-- name: DeleteTopic :execrows
 DELETE FROM Topics WHERE topic_id = $1
 `
@@ -133,66 +121,13 @@ func (q *Queries) DeleteTopic(ctx context.Context, topicID int64) (int64, error)
 	return result.RowsAffected(), nil
 }
 
-const findCommentByID = `-- name: FindCommentByID :one
-SELECT comment_id, user_id, post_id, description, created_at, updated_at FROM Comments WHERE comment_id = $1
-`
-
-func (q *Queries) FindCommentByID(ctx context.Context, commentID int64) (Comment, error) {
-	row := q.db.QueryRow(ctx, findCommentByID, commentID)
-	var i Comment
-	err := row.Scan(
-		&i.CommentID,
-		&i.UserID,
-		&i.PostID,
-		&i.Description,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const findPostByID = `-- name: FindPostByID :one
-SELECT post_id, topic_id, user_id, title, description, created_at, updated_at FROM Posts WHERE post_id = $1
-`
-
-func (q *Queries) FindPostByID(ctx context.Context, postID int64) (Post, error) {
-	row := q.db.QueryRow(ctx, findPostByID, postID)
-	var i Post
-	err := row.Scan(
-		&i.PostID,
-		&i.TopicID,
-		&i.UserID,
-		&i.Title,
-		&i.Description,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const findTopicByID = `-- name: FindTopicByID :one
-SELECT topic_id, user_id, title, created_at FROM Topics WHERE topic_id = $1
-`
-
-func (q *Queries) FindTopicByID(ctx context.Context, topicID int64) (Topic, error) {
-	row := q.db.QueryRow(ctx, findTopicByID, topicID)
-	var i Topic
-	err := row.Scan(
-		&i.TopicID,
-		&i.UserID,
-		&i.Title,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
-const listComments = `-- name: ListComments :many
-SELECT comment_id, user_id, post_id, description, created_at, updated_at FROM Comments ORDER BY updated_at DESC
+const findCommentsByPost = `-- name: FindCommentsByPost :many
+SELECT comment_id, user_id, post_id, description, created_at, updated_at FROM Comments WHERE post_id = $1 ORDER BY updated_at DESC
 `
 
 // Comments Queries
-func (q *Queries) ListComments(ctx context.Context) ([]Comment, error) {
-	rows, err := q.db.Query(ctx, listComments)
+func (q *Queries) FindCommentsByPost(ctx context.Context, postID int64) ([]Comment, error) {
+	rows, err := q.db.Query(ctx, findCommentsByPost, postID)
 	if err != nil {
 		return nil, err
 	}
@@ -218,13 +153,32 @@ func (q *Queries) ListComments(ctx context.Context) ([]Comment, error) {
 	return items, nil
 }
 
-const listPosts = `-- name: ListPosts :many
-SELECT post_id, topic_id, user_id, title, description, created_at, updated_at FROM Posts ORDER BY updated_at DESC
+const findPostByID = `-- name: FindPostByID :one
+SELECT post_id, topic_id, user_id, title, description, created_at, updated_at FROM Posts WHERE post_id = $1
+`
+
+func (q *Queries) FindPostByID(ctx context.Context, postID int64) (Post, error) {
+	row := q.db.QueryRow(ctx, findPostByID, postID)
+	var i Post
+	err := row.Scan(
+		&i.PostID,
+		&i.TopicID,
+		&i.UserID,
+		&i.Title,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const findPostsByTopic = `-- name: FindPostsByTopic :many
+SELECT post_id, topic_id, user_id, title, description, created_at, updated_at FROM Posts WHERE topic_id = $1 ORDER BY updated_at DESC
 `
 
 // Posts Queries
-func (q *Queries) ListPosts(ctx context.Context) ([]Post, error) {
-	rows, err := q.db.Query(ctx, listPosts)
+func (q *Queries) FindPostsByTopic(ctx context.Context, topicID int64) ([]Post, error) {
+	rows, err := q.db.Query(ctx, findPostsByTopic, topicID)
 	if err != nil {
 		return nil, err
 	}
@@ -249,6 +203,22 @@ func (q *Queries) ListPosts(ctx context.Context) ([]Post, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const findTopicByID = `-- name: FindTopicByID :one
+SELECT topic_id, user_id, title, created_at FROM Topics WHERE topic_id = $1
+`
+
+func (q *Queries) FindTopicByID(ctx context.Context, topicID int64) (Topic, error) {
+	row := q.db.QueryRow(ctx, findTopicByID, topicID)
+	var i Topic
+	err := row.Scan(
+		&i.TopicID,
+		&i.UserID,
+		&i.Title,
+		&i.CreatedAt,
+	)
+	return i, err
 }
 
 const listTopics = `-- name: ListTopics :many
@@ -282,16 +252,17 @@ func (q *Queries) ListTopics(ctx context.Context) ([]Topic, error) {
 }
 
 const updateComment = `-- name: UpdateComment :one
-UPDATE Comments SET description = $2, updated_at = now() WHERE comment_id = $1 RETURNING comment_id, user_id, post_id, description, created_at, updated_at
+UPDATE Comments SET description = $3, updated_at = now() WHERE comment_id = $1 AND post_id = $2 RETURNING comment_id, user_id, post_id, description, created_at, updated_at
 `
 
 type UpdateCommentParams struct {
 	CommentID   int64  `json:"comment_id"`
+	PostID      int64  `json:"post_id"`
 	Description string `json:"description"`
 }
 
 func (q *Queries) UpdateComment(ctx context.Context, arg UpdateCommentParams) (Comment, error) {
-	row := q.db.QueryRow(ctx, updateComment, arg.CommentID, arg.Description)
+	row := q.db.QueryRow(ctx, updateComment, arg.CommentID, arg.PostID, arg.Description)
 	var i Comment
 	err := row.Scan(
 		&i.CommentID,

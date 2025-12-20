@@ -69,6 +69,7 @@ func (s *svc) UpdateTopic(ctx context.Context, arg repo.UpdateTopicParams) (repo
 }
 
 // DeleteTopic deletes the topic given by the id from the database.
+// It deletes all posts under that topic too.
 func (s *svc) DeleteTopic(ctx context.Context, id int64) error {
 	delRows, err := s.repo.DeleteTopic(ctx, id)
 	if err != nil {

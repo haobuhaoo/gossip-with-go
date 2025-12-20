@@ -24,6 +24,9 @@ SELECT * FROM Posts WHERE post_id = $1;
 -- name: CreatePost :one
 INSERT INTO Posts (topic_id, user_id, title, description) VALUES ($1, $2, $3, $4) RETURNING *;
 
+-- name: UpdatePost :one
+UPDATE Posts SET title = $2, description = $3, updated_at = now() WHERE post_id = $1 RETURNING *;
+
 -- name: UpdatePostTitle :one
 UPDATE Posts SET title = $2, updated_at = now() WHERE post_id = $1 RETURNING *;
 
@@ -35,6 +38,9 @@ UPDATE Posts SET updated_at = now() WHERE post_id = $1 RETURNING *;
 
 -- name: DeletePost :execrows
 DELETE FROM Posts WHERE post_id = $1;
+
+-- name: DeletePostByTopic :execrows
+DELETE FROM Posts WHERE topic_id = $1;
 
 -- Comments Queries
 -- name: ListComments :many

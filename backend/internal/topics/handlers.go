@@ -2,7 +2,6 @@ package topics
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -197,7 +196,7 @@ func (h *handler) DeleteTopic(w http.ResponseWriter, r *http.Request) {
 
 	err = h.service.DeleteTopic(r.Context(), id)
 	if err != nil {
-		if errors.Is(err, ErrTopicNotFound) {
+		if err == ErrTopicNotFound {
 			http.Error(w, ErrTopicNotFound.Error(), http.StatusNotFound)
 			return
 		}

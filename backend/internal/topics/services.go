@@ -12,12 +12,14 @@ import (
 // It depends on the sql generated Queries type to interact with the PostgreSQL database.
 type svc struct {
 	repo *repo.Queries
+	db   *pgx.Conn
 }
 
 // NewService creates a new topic service.
-func NewService(repo *repo.Queries) Service {
+func NewService(repo *repo.Queries, db *pgx.Conn) Service {
 	return &svc{
 		repo: repo,
+		db:   db,
 	}
 }
 
@@ -69,8 +71,22 @@ func (s *svc) UpdateTopic(ctx context.Context, arg repo.UpdateTopicParams) (repo
 }
 
 // DeleteTopic deletes the topic given by the id from the database.
+// It deletes all posts under that topic too.
 func (s *svc) DeleteTopic(ctx context.Context, id int64) error {
-	delRows, err := s.repo.DeleteTopic(ctx, id)
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	qtx := s.repo.WithTx(tx)
+
+	delRows, err := qtx.DeletePostByTopic(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	delRows, err = qtx.DeleteTopic(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -79,5 +95,6 @@ func (s *svc) DeleteTopic(ctx context.Context, id int64) error {
 		return ErrTopicNotFound
 	}
 
+	tx.Commit(ctx)
 	return nil
 }

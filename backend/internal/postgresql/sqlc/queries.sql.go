@@ -109,6 +109,18 @@ func (q *Queries) DeletePost(ctx context.Context, postID int64) (int64, error) {
 	return result.RowsAffected(), nil
 }
 
+const deletePostByTopic = `-- name: DeletePostByTopic :execrows
+DELETE FROM Posts WHERE topic_id = $1
+`
+
+func (q *Queries) DeletePostByTopic(ctx context.Context, topicID int64) (int64, error) {
+	result, err := q.db.Exec(ctx, deletePostByTopic, topicID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const deleteTopic = `-- name: DeleteTopic :execrows
 DELETE FROM Topics WHERE topic_id = $1
 `
@@ -285,6 +297,31 @@ func (q *Queries) UpdateComment(ctx context.Context, arg UpdateCommentParams) (C
 		&i.CommentID,
 		&i.UserID,
 		&i.PostID,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updatePost = `-- name: UpdatePost :one
+UPDATE Posts SET title = $2, description = $3, updated_at = now() WHERE post_id = $1 RETURNING post_id, topic_id, user_id, title, description, created_at, updated_at
+`
+
+type UpdatePostParams struct {
+	PostID      int64  `json:"post_id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+}
+
+func (q *Queries) UpdatePost(ctx context.Context, arg UpdatePostParams) (Post, error) {
+	row := q.db.QueryRow(ctx, updatePost, arg.PostID, arg.Title, arg.Description)
+	var i Post
+	err := row.Scan(
+		&i.PostID,
+		&i.TopicID,
+		&i.UserID,
+		&i.Title,
 		&i.Description,
 		&i.CreatedAt,
 		&i.UpdatedAt,

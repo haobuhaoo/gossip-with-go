@@ -85,6 +85,17 @@ func (q *Queries) CreateTopic(ctx context.Context, arg CreateTopicParams) (Topic
 	return i, err
 }
 
+const createUser = `-- name: CreateUser :one
+INSERT INTO Users (name) VALUES ($1) RETURNING user_id, name
+`
+
+func (q *Queries) CreateUser(ctx context.Context, name string) (User, error) {
+	row := q.db.QueryRow(ctx, createUser, name)
+	var i User
+	err := row.Scan(&i.UserID, &i.Name)
+	return i, err
+}
+
 const deleteComment = `-- name: DeleteComment :execrows
 DELETE FROM Comments WHERE comment_id = $1
 `
@@ -218,6 +229,18 @@ func (q *Queries) FindTopicByID(ctx context.Context, topicID int64) (Topic, erro
 		&i.Title,
 		&i.CreatedAt,
 	)
+	return i, err
+}
+
+const findUserByName = `-- name: FindUserByName :one
+SELECT user_id, name FROM Users WHERE name = $1
+`
+
+// Users Queries
+func (q *Queries) FindUserByName(ctx context.Context, name string) (User, error) {
+	row := q.db.QueryRow(ctx, findUserByName, name)
+	var i User
+	err := row.Scan(&i.UserID, &i.Name)
 	return i, err
 }
 

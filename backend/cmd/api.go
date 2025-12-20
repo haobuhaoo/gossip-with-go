@@ -11,6 +11,7 @@ import (
 	repo "github.com/haobuhaoo/gossip-with-go/internal/postgresql/sqlc"
 	"github.com/haobuhaoo/gossip-with-go/internal/posts"
 	"github.com/haobuhaoo/gossip-with-go/internal/topics"
+	"github.com/haobuhaoo/gossip-with-go/internal/users"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -37,6 +38,10 @@ func (app *application) mount() http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+
+	userService := users.NewService(repo.New(app.db))
+	userHandler := users.NewHandler(userService)
+	users.Routes(r, userHandler)
 
 	topicService := topics.NewService(repo.New(app.db))
 	topicHandler := topics.NewHandler(topicService)

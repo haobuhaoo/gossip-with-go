@@ -1,3 +1,10 @@
+-- Users Queries
+-- name: FindUserByName :one
+SELECT * FROM Users WHERE name = $1;
+
+-- name: CreateUser :one
+INSERT INTO Users (name) VALUES ($1) RETURNING *;
+
 -- Topics Queries
 -- name: ListTopics :many
 SELECT * FROM Topics ORDER BY title;

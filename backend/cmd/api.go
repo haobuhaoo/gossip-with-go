@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	"github.com/haobuhaoo/gossip-with-go/internal/comments"
 	repo "github.com/haobuhaoo/gossip-with-go/internal/postgresql/sqlc"
 	"github.com/haobuhaoo/gossip-with-go/internal/posts"
@@ -36,6 +37,14 @@ type dbConfig struct {
 // It returns a chi.Router that can be used by the HTTP server.
 func (app *application) mount() http.Handler {
 	r := chi.NewRouter()
+
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:5173"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-type"},
+		AllowCredentials: true,
+		MaxAge:           300,
+	}))
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 

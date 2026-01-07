@@ -1,5 +1,6 @@
-import TopicList from "../components/topiclist";
 import React from "react";
+
+import TopicList from "../components/topiclist";
 
 const HomePage: React.FC = () => {
     return (

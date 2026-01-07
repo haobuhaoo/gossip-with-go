@@ -1,7 +1,8 @@
-import PostList from "../components/postlist";
 import React, { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+
 import type { Post } from "../types/entity";
+import PostList from "../components/postlist";
 
 const TopicPage: React.FC = () => {
     const navigate = useNavigate();

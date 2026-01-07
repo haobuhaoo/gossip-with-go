@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+
 import type { Topic } from "../types/entity";
 
 const TopicList: React.FC = () => {

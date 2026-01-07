@@ -1,4 +1,5 @@
 import React from "react";
+
 import type { Post } from "../types/entity";
 
 type Props = {

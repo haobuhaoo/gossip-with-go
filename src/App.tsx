@@ -1,8 +1,11 @@
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+
 import LoginPage from "./pages/login";
 import HomePage from "./pages/home";
 import TopicPage from "./pages/topic";
 import PostPage from "./pages/post";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+
+import "./App.css";
 
 const App: React.FC = () => {
     return (

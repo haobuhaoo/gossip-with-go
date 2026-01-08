@@ -1,9 +1,9 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
-import LoginPage from "./pages/login";
 import HomePage from "./pages/home";
-import TopicPage from "./pages/topic";
+import LoginPage from "./pages/login";
 import PostPage from "./pages/post";
+import TopicPage from "./pages/topic";
 
 import "./App.css";
 

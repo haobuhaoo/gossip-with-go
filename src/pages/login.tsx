@@ -5,8 +5,8 @@ import { Box, Button, Card, TextField, Typography } from "@mui/material";
 import axiosInstance from "../utils/axiosInstance";
 
 /**
- * Models a login form page that asks for a username and sends a GET or POST request to fetch or
- * create user data. On success, the username is stored as a token in localStorage.
+ * Models a login form page that asks for a username and sends a `GET` or `POST` request to fetch or
+ * create user data. On success, the username is stored as a token in `localStorage`.
  */
 const LoginPage: React.FC = () => {
     const [error, setError] = useState<string>(" ");
@@ -38,7 +38,8 @@ const LoginPage: React.FC = () => {
             axiosInstance.get(`users/${username}`)
                 .then(res => {
                     if (res.data) {
-                        localStorage.setItem("token", res.data.payload?.data?.name);
+                        localStorage.setItem("user", res.data.payload?.data?.name);
+                        localStorage.setItem("token", res.data.payload?.data?.user_id);
                         navigate("/home");
                     }
                 })
@@ -50,7 +51,8 @@ const LoginPage: React.FC = () => {
             axiosInstance.post("/users", { name: username })
                 .then(res => {
                     if (res.data) {
-                        localStorage.setItem("token", res.data.payload?.data?.name);
+                        localStorage.setItem("user", res.data.payload?.data?.name);
+                        localStorage.setItem("token", res.data.payload?.data?.user_id);
                         navigate("/home");
                     }
                 })

@@ -1,6 +1,6 @@
 export interface Topic {
-    id: number;
-    topicTitle: string;
+    topic_id: number;
+    title: string;
 }
 
 export interface Post {

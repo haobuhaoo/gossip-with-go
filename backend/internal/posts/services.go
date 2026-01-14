@@ -23,26 +23,54 @@ func NewService(repo *repo.Queries) Service {
 }
 
 // FindPostsByTopic returns all posts of the given topic id from the database.
-func (s *svc) FindPostsByTopic(ctx context.Context, id int64) ([]repo.Post, error) {
+func (s *svc) FindPostsByTopic(ctx context.Context, id int64) ([]Post, error) {
 	_, err := s.repo.FindTopicByID(ctx, id)
 	if err != nil {
-		return []repo.Post{}, topics.ErrTopicNotFound
+		return []Post{}, topics.ErrTopicNotFound
 	}
 
-	return s.repo.FindPostsByTopic(ctx, id)
+	rows, err := s.repo.FindPostsByTopic(ctx, id)
+	if err != nil {
+		return []Post{}, err
+	}
+
+	posts := make([]Post, 0, len(rows))
+	for _, row := range rows {
+		posts = append(posts, Post{
+			PostID:      row.PostID,
+			TopicID:     row.TopicID,
+			UserID:      row.UserID,
+			Username:    row.Username,
+			Title:       row.Title,
+			Description: row.Description,
+			CreatedAt:   row.CreatedAt.Time,
+			UpdatedAt:   row.UpdatedAt.Time,
+		})
+	}
+	return posts, nil
 }
 
 // FindPostByID returns a specific post identified by id from the database.
-func (s *svc) FindPostByID(ctx context.Context, id int64) (repo.Post, error) {
-	post, err := s.repo.FindPostByID(ctx, id)
+func (s *svc) FindPostByID(ctx context.Context, id int64) (Post, error) {
+	rows, err := s.repo.FindPostByID(ctx, id)
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return repo.Post{}, ErrPostNotFound
+			return Post{}, ErrPostNotFound
 		}
-		return repo.Post{}, err
+		return Post{}, err
 	}
 
-	return post, nil
+	posts := Post{
+		PostID:      rows.PostID,
+		TopicID:     rows.TopicID,
+		UserID:      rows.UserID,
+		Username:    rows.Username,
+		Title:       rows.Title,
+		Description: rows.Description,
+		CreatedAt:   rows.CreatedAt.Time,
+		UpdatedAt:   rows.UpdatedAt.Time,
+	}
+	return posts, nil
 }
 
 // CreatePost creates and returns a new post with the given arg params.
@@ -59,29 +87,9 @@ func (s *svc) CreatePost(ctx context.Context, arg repo.CreatePostParams) (repo.P
 }
 
 // UpdatePost updates an existing post with the given arg params and returns it.
-// It calls the corresponding functions (UpdatePost, UpdatePostTitle, UpdatePostDescription) depending on
-// the given arg params.
 func (s *svc) UpdatePost(ctx context.Context, arg repo.UpdatePostParams) (repo.Post, error) {
 	var post repo.Post
-	var err error
-	if arg.Title != "" && arg.Description != "" {
-		post, err = s.repo.UpdatePost(ctx, arg)
-	} else if arg.Title != "" {
-		updateTitle := repo.UpdatePostTitleParams{
-			PostID: arg.PostID,
-			Title:  arg.Title,
-		}
-		post, err = s.UpdatePostTitle(ctx, updateTitle)
-	} else if arg.Description != "" {
-		updateDesc := repo.UpdatePostDescriptionParams{
-			PostID:      arg.PostID,
-			Description: arg.Description,
-		}
-		post, err = s.UpdatePostDescription(ctx, updateDesc)
-	} else {
-		return repo.Post{}, InvalidRequstBody
-	}
-
+	post, err := s.repo.UpdatePost(ctx, arg)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return repo.Post{}, ErrPostNotFound
@@ -93,16 +101,6 @@ func (s *svc) UpdatePost(ctx context.Context, arg repo.UpdatePostParams) (repo.P
 	}
 
 	return post, nil
-}
-
-// UpdatePostTitle updates an existing post title with the given arg params and returns it.
-func (s *svc) UpdatePostTitle(ctx context.Context, arg repo.UpdatePostTitleParams) (repo.Post, error) {
-	return s.repo.UpdatePostTitle(ctx, arg)
-}
-
-// UpdatePostDescription updates an existing post description with the given arg params and returns it.
-func (s *svc) UpdatePostDescription(ctx context.Context, arg repo.UpdatePostDescriptionParams) (repo.Post, error) {
-	return s.repo.UpdatePostDescription(ctx, arg)
 }
 
 // DeletePost deletes the post given by the id from the database.

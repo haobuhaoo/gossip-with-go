@@ -162,7 +162,8 @@ func (h *handler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !isValidPostReqBody(req) {
+	err = validator.New().Struct(req)
+	if err != nil {
 		helper.WriteError(w, InvalidRequestBodyMessage, http.StatusBadRequest)
 		return
 	}
@@ -174,10 +175,6 @@ func (h *handler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 	}
 	post, err := h.service.UpdatePost(r.Context(), newPost)
 	if err != nil {
-		if err == InvalidRequstBody {
-			helper.WriteError(w, InvalidRequstBody.Error(), http.StatusBadRequest)
-			return
-		}
 		if err == ErrPostNotFound {
 			helper.WriteError(w, ErrPostNotFound.Error(), http.StatusNotFound)
 			return
@@ -199,14 +196,6 @@ func (h *handler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 
 	response := helper.ParseResponseDataAndMessage(jsonPost, SuccessfulUpdatePostMessage)
 	helper.Write(w, response)
-}
-
-// isValidPostReqBody returns true if both title and description of the request body are not empty.
-func isValidPostReqBody(data UpdatePostRequest) bool {
-	if data.Title == "" && data.Description == "" {
-		return false
-	}
-	return true
 }
 
 // DeletePost handles DELETE /posts/{id} requests.

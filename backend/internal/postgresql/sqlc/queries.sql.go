@@ -7,6 +7,8 @@ package repo
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createComment = `-- name: CreateComment :one
@@ -133,22 +135,34 @@ func (q *Queries) DeleteTopic(ctx context.Context, topicID int64) (int64, error)
 }
 
 const findCommentsByPost = `-- name: FindCommentsByPost :many
-SELECT comment_id, user_id, post_id, description, created_at, updated_at FROM Comments WHERE post_id = $1 ORDER BY updated_at DESC
+SELECT c.comment_id, c.user_id, u.name as username, c.post_id, c.description, c.created_at, c.updated_at
+FROM Comments c JOIN Users u ON u.user_id = c.user_id WHERE c.post_id = $1 ORDER BY c.updated_at DESC
 `
 
+type FindCommentsByPostRow struct {
+	CommentID   int64              `json:"comment_id"`
+	UserID      int64              `json:"user_id"`
+	Username    string             `json:"username"`
+	PostID      int64              `json:"post_id"`
+	Description string             `json:"description"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
 // Comments Queries
-func (q *Queries) FindCommentsByPost(ctx context.Context, postID int64) ([]Comment, error) {
+func (q *Queries) FindCommentsByPost(ctx context.Context, postID int64) ([]FindCommentsByPostRow, error) {
 	rows, err := q.db.Query(ctx, findCommentsByPost, postID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Comment
+	var items []FindCommentsByPostRow
 	for rows.Next() {
-		var i Comment
+		var i FindCommentsByPostRow
 		if err := rows.Scan(
 			&i.CommentID,
 			&i.UserID,
+			&i.Username,
 			&i.PostID,
 			&i.Description,
 			&i.CreatedAt,
@@ -165,16 +179,29 @@ func (q *Queries) FindCommentsByPost(ctx context.Context, postID int64) ([]Comme
 }
 
 const findPostByID = `-- name: FindPostByID :one
-SELECT post_id, topic_id, user_id, title, description, created_at, updated_at FROM Posts WHERE post_id = $1
+SELECT p.post_id, p.topic_id, p.user_id, u.name AS username, p.title, p.description, p.created_at, p.updated_at
+FROM Posts p JOIN Users u ON u.user_id = p.user_id WHERE post_id = $1
 `
 
-func (q *Queries) FindPostByID(ctx context.Context, postID int64) (Post, error) {
+type FindPostByIDRow struct {
+	PostID      int64              `json:"post_id"`
+	TopicID     int64              `json:"topic_id"`
+	UserID      int64              `json:"user_id"`
+	Username    string             `json:"username"`
+	Title       string             `json:"title"`
+	Description string             `json:"description"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) FindPostByID(ctx context.Context, postID int64) (FindPostByIDRow, error) {
 	row := q.db.QueryRow(ctx, findPostByID, postID)
-	var i Post
+	var i FindPostByIDRow
 	err := row.Scan(
 		&i.PostID,
 		&i.TopicID,
 		&i.UserID,
+		&i.Username,
 		&i.Title,
 		&i.Description,
 		&i.CreatedAt,
@@ -184,23 +211,36 @@ func (q *Queries) FindPostByID(ctx context.Context, postID int64) (Post, error) 
 }
 
 const findPostsByTopic = `-- name: FindPostsByTopic :many
-SELECT post_id, topic_id, user_id, title, description, created_at, updated_at FROM Posts WHERE topic_id = $1 ORDER BY updated_at DESC
+SELECT p.post_id, p.topic_id, p.user_id, u.name AS username, p.title, p.description, p.created_at, p.updated_at
+FROM Posts p JOIN Users u ON u.user_id = p.user_id WHERE p.topic_id = $1 ORDER BY p.updated_at DESC
 `
 
+type FindPostsByTopicRow struct {
+	PostID      int64              `json:"post_id"`
+	TopicID     int64              `json:"topic_id"`
+	UserID      int64              `json:"user_id"`
+	Username    string             `json:"username"`
+	Title       string             `json:"title"`
+	Description string             `json:"description"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
 // Posts Queries
-func (q *Queries) FindPostsByTopic(ctx context.Context, topicID int64) ([]Post, error) {
+func (q *Queries) FindPostsByTopic(ctx context.Context, topicID int64) ([]FindPostsByTopicRow, error) {
 	rows, err := q.db.Query(ctx, findPostsByTopic, topicID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Post
+	var items []FindPostsByTopicRow
 	for rows.Next() {
-		var i Post
+		var i FindPostsByTopicRow
 		if err := rows.Scan(
 			&i.PostID,
 			&i.TopicID,
 			&i.UserID,
+			&i.Username,
 			&i.Title,
 			&i.Description,
 			&i.CreatedAt,
@@ -323,60 +363,12 @@ func (q *Queries) UpdatePost(ctx context.Context, arg UpdatePostParams) (Post, e
 	return i, err
 }
 
-const updatePostDescription = `-- name: UpdatePostDescription :one
-UPDATE Posts SET description = $2, updated_at = now() WHERE post_id = $1 RETURNING post_id, topic_id, user_id, title, description, created_at, updated_at
-`
-
-type UpdatePostDescriptionParams struct {
-	PostID      int64  `json:"post_id"`
-	Description string `json:"description"`
-}
-
-func (q *Queries) UpdatePostDescription(ctx context.Context, arg UpdatePostDescriptionParams) (Post, error) {
-	row := q.db.QueryRow(ctx, updatePostDescription, arg.PostID, arg.Description)
-	var i Post
-	err := row.Scan(
-		&i.PostID,
-		&i.TopicID,
-		&i.UserID,
-		&i.Title,
-		&i.Description,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
 const updatePostStatus = `-- name: UpdatePostStatus :one
 UPDATE Posts SET updated_at = now() WHERE post_id = $1 RETURNING post_id, topic_id, user_id, title, description, created_at, updated_at
 `
 
 func (q *Queries) UpdatePostStatus(ctx context.Context, postID int64) (Post, error) {
 	row := q.db.QueryRow(ctx, updatePostStatus, postID)
-	var i Post
-	err := row.Scan(
-		&i.PostID,
-		&i.TopicID,
-		&i.UserID,
-		&i.Title,
-		&i.Description,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const updatePostTitle = `-- name: UpdatePostTitle :one
-UPDATE Posts SET title = $2, updated_at = now() WHERE post_id = $1 RETURNING post_id, topic_id, user_id, title, description, created_at, updated_at
-`
-
-type UpdatePostTitleParams struct {
-	PostID int64  `json:"post_id"`
-	Title  string `json:"title"`
-}
-
-func (q *Queries) UpdatePostTitle(ctx context.Context, arg UpdatePostTitleParams) (Post, error) {
-	row := q.db.QueryRow(ctx, updatePostTitle, arg.PostID, arg.Title)
 	var i Post
 	err := row.Scan(
 		&i.PostID,

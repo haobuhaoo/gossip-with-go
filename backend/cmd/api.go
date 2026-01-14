@@ -13,13 +13,13 @@ import (
 	"github.com/haobuhaoo/gossip-with-go/internal/posts"
 	"github.com/haobuhaoo/gossip-with-go/internal/topics"
 	"github.com/haobuhaoo/gossip-with-go/internal/users"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // application contains the configuration and database connection for the web server.
 type application struct {
 	config config
-	db     *pgx.Conn
+	db     *pgxpool.Pool
 }
 
 // config contains the server address string and database configurations.
@@ -48,19 +48,21 @@ func (app *application) mount() http.Handler {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	userService := users.NewService(repo.New(app.db))
+	repo := repo.New(app.db)
+
+	userService := users.NewService(repo)
 	userHandler := users.NewHandler(userService)
 	users.Routes(r, userHandler)
 
-	topicService := topics.NewService(repo.New(app.db))
+	topicService := topics.NewService(repo)
 	topicHandler := topics.NewHandler(topicService)
 	topics.Routes(r, topicHandler)
 
-	postService := posts.NewService(repo.New(app.db))
+	postService := posts.NewService(repo)
 	postHandler := posts.NewHandler(postService)
 	posts.Routes(r, postHandler)
 
-	commentService := comments.NewService(repo.New(app.db), app.db)
+	commentService := comments.NewService(repo, app.db)
 	commentHandler := comments.NewHandler(commentService)
 	comments.Routes(r, commentHandler)
 

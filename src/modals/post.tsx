@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Box, Button, Dialog, DialogTitle, TextField } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
 
-import type { Topic } from "../types/entity";
+import type { Post } from "../types/entity";
 
 type Props = {
     /**
@@ -16,63 +16,71 @@ type Props = {
     close: () => void;
 
     /**
-     * Topic to be updated, or null if creating a new topic.
+     * Post to be updated, or null if creating a new post.
      */
-    topic: Topic | null;
+    post: Post | null;
 
     /**
-     * True if updating an existing topic.
+     * True if updating an existing post.
      */
     isUpdate: boolean;
 
     /**
-     * Function that passes the `newTopic` to be created to parent component.
+     * Function that passes the `title` and `description` to be created to parent component.
      */
-    onCreate: (newTopic: string) => void;
+    onCreate: (title: string, description: string) => void;
 
     /**
-     * Function that passes the updated `newTopic` to parent component, along with its `topicId`
-     * and `topicUserId`.
+     * Function that passes the updated `title` andor `description` to parent component,
+     * along with its `postId` and `postUserId`.
      */
-    onUpdate: (topicId: number, topicUserId: number, newTopic: string) => void;
+    onUpdate: (postId: number, postUserId: number, title: string, description: string) => void;
 }
 
 /**
  * Renders a form modal that calls `onCreate` and `onUpdate` when button is clicked.
  */
-const TopicModal: React.FC<Props> = ({ open, close, topic, isUpdate, onCreate, onUpdate }) => {
-    const [newTopic, setNewTopic] = useState<string>("");
+const PostModal: React.FC<Props> = ({ open, close, post, isUpdate, onCreate, onUpdate }) => {
+    const [newTitle, setNewTitle] = useState<string>("");
+    const [newDesc, setNewDesc] = useState<string>("");
     const [error, setError] = useState<string>(" ");
 
     const handleClose = () => {
-        setNewTopic("");
+        setNewTitle("");
+        setNewDesc("");
         close();
     };
 
-    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setNewTopic(event.target.value);
+    const handleChangeTitle = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setNewTitle(event.target.value);
+    };
+
+    const handleChangeDesc = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setNewDesc(event.target.value);
     };
 
     /**
-     * Sends the title to create if `isUpdate` is false or update the topic if `isUpdate`
-     * is true.
+     * Sends the title and description to create if `isUpdate` is false or update the post
+     * if `isUpdate` is true.
      */
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setError(" ");
 
         if (isUpdate) {
-            if (topic == null) {
-                setError("system error: topic missing");
+            if (post == null) {
+                setError("system error: post missing");
                 return;
             }
-            onUpdate(topic.topic_id, topic.user_id, newTopic);
-            setNewTopic("");
+            onUpdate(post.post_id, post.user_id, newTitle, newDesc);
+            setNewTitle("");
+            setNewDesc("");
             setError(" ");
             return;
         }
-        onCreate(newTopic);
-        setNewTopic("");
+        onCreate(newTitle, newDesc);
+        setNewTitle("");
+        setNewDesc("");
         setError(" ");
     };
 
@@ -81,8 +89,11 @@ const TopicModal: React.FC<Props> = ({ open, close, topic, isUpdate, onCreate, o
     }, [error]);
 
     useEffect(() => {
-        if (isUpdate) setNewTopic(topic?.title || "");
-    }, [open, topic]);
+        if (isUpdate) {
+            setNewTitle(post?.title || "");
+            setNewDesc(post?.description || "");
+        }
+    }, [open, post]);
 
     return (
         <Dialog open={open} onClose={() => handleClose()} disableRestoreFocus>
@@ -94,7 +105,7 @@ const TopicModal: React.FC<Props> = ({ open, close, topic, isUpdate, onCreate, o
                     fontWeight: "bold",
                     fontSize: "28px"
                 }}>
-                {isUpdate ? "Enter the new topic" : "Enter a new topic."}
+                {isUpdate ? "Enter the new post" : "Enter a new post."}
             </DialogTitle>
             <CloseIcon
                 onClick={close}
@@ -118,17 +129,32 @@ const TopicModal: React.FC<Props> = ({ open, close, topic, isUpdate, onCreate, o
                     alignItems: "center",
                     marginX: "20px",
                     marginBottom: "20px",
-                    "& .MuiTextField-root": { mt: 2, mb: 1, mx: 3, width: "40ch" },
+                    "& .MuiTextField-root": { mt: 2, mb: 1, mx: 3, width: "60ch" },
                 }}>
                 <TextField
                     required
-                    id="newTopic"
-                    label="New Topic"
-                    value={newTopic}
-                    placeholder="topic"
+                    id="newTitle"
+                    label="New Title"
+                    value={newTitle}
+                    placeholder="title"
                     autoComplete="off"
                     autoFocus
-                    onChange={handleChange}
+                    multiline
+                    rows={2}
+                    onChange={handleChangeTitle}
+                    error={error != " "}
+                    helperText={error}
+                />
+                <TextField
+                    required
+                    id="newDesc"
+                    label="New Description"
+                    value={newDesc}
+                    placeholder="description"
+                    autoComplete="off"
+                    multiline
+                    rows={6}
+                    onChange={handleChangeDesc}
                     error={error != " "}
                     helperText={error}
                 />
@@ -148,4 +174,4 @@ const TopicModal: React.FC<Props> = ({ open, close, topic, isUpdate, onCreate, o
     )
 };
 
-export default TopicModal;
+export default PostModal;

@@ -16,7 +16,7 @@ const axiosInstance = axios.create({
  */
 axiosInstance.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem("token");
+        const token: string | null = localStorage.getItem("token");
         if (token) {
             config.headers = config.headers ?? {}
             config.headers["Authorization"] = `Bearer ${token}`;
@@ -39,7 +39,7 @@ axiosInstance.interceptors.response.use(
             return Promise.reject("Network Error");
         }
 
-        const msg = error.response.data?.messages?.[0] ?? "Request failed";
+        const msg: string = error.response.data?.messages?.[0] ?? "Request failed";
         return Promise.reject(msg);
     }
 )

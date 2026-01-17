@@ -1,19 +1,21 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Button, Card, TextField, Typography } from "@mui/material";
+import { Alert, Box, Button, Card, Snackbar, TextField, Typography } from "@mui/material";
 
 import axiosInstance from "../utils/axiosInstance";
 
 /**
  * Models a login form page that asks for a username and sends a `GET` or `POST` request to fetch or
- * create user data. On success, the username is stored as a token in `localStorage`.
+ * create user data. On successful login, the username and userId is stored as a token in `localStorage`.
  */
 const LoginPage: React.FC = () => {
     const [error, setError] = useState<string>(" ");
     const [username, setUsername] = useState<string>("");
     const [isLogin, setIsLogin] = useState<boolean>(true);
+    const [openSnackBar, setOpenSnackBar] = useState<boolean>(false);
     const navigate = useNavigate();
     const usernameRef = useRef<HTMLInputElement | null>(null);
+    const USERNAME_REGEX: RegExp = /^[a-zA-Z0-9._-]{3,50}$/;
 
     const handleButtonClick = () => {
         setIsLogin(!isLogin);
@@ -27,12 +29,20 @@ const LoginPage: React.FC = () => {
     };
 
     /**
-     * Sends the username to backend API to fetch user data or create a new user. On success, the
-     * username is stored as a token and the user is navigated to the home page.
+     * Sends the username to backend API to fetch user data or create a new user. On successful
+     * login, the username is stored as a token and the user is navigated to the home page. On
+     * successful registeration, the user is notified and asked to login with their new credentials.
      */
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setError(" ");
+
+        if (!USERNAME_REGEX.test(username)) {
+            console.error("register error");
+            setError("3 to 50 characters containing only alphanumberic, period, hyphen, "
+                + "underscore are allowed");
+            return;
+        }
 
         if (isLogin) {
             axiosInstance.get(`users/${username}`)
@@ -51,9 +61,10 @@ const LoginPage: React.FC = () => {
             axiosInstance.post("/users", { name: username })
                 .then(res => {
                     if (res.data) {
-                        localStorage.setItem("user", res.data.payload?.data?.name);
-                        localStorage.setItem("token", res.data.payload?.data?.user_id);
-                        navigate("/home");
+                        setUsername("");
+                        setOpenSnackBar(true);
+                        setTimeout(() => usernameRef.current?.focus(), 600);
+                        setIsLogin(true);
                     }
                 })
                 .catch(err => {
@@ -85,7 +96,8 @@ const LoginPage: React.FC = () => {
                     width: "60vw",
                     height: "60vh",
                     borderRadius: "20px",
-                    boxShadow: "0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22)"
+                    boxShadow: "0 14px 28px rgba(0, 0, 0, 0.25), "
+                        + "0 10px 10px rgba(0, 0, 0, 0.22)"
                 }}>
                 <Box
                     sx={{
@@ -178,6 +190,18 @@ const LoginPage: React.FC = () => {
                     </Button>
                 </Box>
             </Card>
+
+            <Snackbar
+                open={openSnackBar}
+                autoHideDuration={5000}
+                onClose={() => setOpenSnackBar(false)}>
+                <Alert
+                    onClose={() => setOpenSnackBar(false)}
+                    severity="success"
+                    variant="filled">
+                    Registered successfully!
+                </Alert>
+            </Snackbar>
         </div>
     );
 };

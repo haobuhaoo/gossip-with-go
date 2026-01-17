@@ -13,8 +13,8 @@ const App: React.FC = () => {
             <Routes>
                 <Route path="/" element={<LoginPage />} />
                 <Route path="/home" element={<HomePage />} />
-                <Route path="/home/:id" element={<TopicPage />} />
-                <Route path="/home/:id/:id" element={<PostPage />} />
+                <Route path="/home/:topicId" element={<TopicPage />} />
+                <Route path="/home/:topicId/:postId" element={<PostPage />} />
             </Routes>
         </BrowserRouter>
     );

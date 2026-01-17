@@ -15,3 +15,13 @@ export interface Post {
     created_at: string;
     updated_at: string;
 }
+
+export interface Comment {
+    comment_id: number;
+    post_id: number;
+    user_id: number;
+    username: string;
+    description: string;
+    created_at: string;
+    updated_at: string;
+}

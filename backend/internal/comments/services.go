@@ -40,9 +40,9 @@ func (s *svc) FindCommentsByPost(ctx context.Context, id int64) ([]Comment, erro
 	for _, row := range rows {
 		comments = append(comments, Comment{
 			CommentID:   row.CommentID,
+			PostID:      row.PostID,
 			UserID:      row.UserID,
 			Username:    row.Username,
-			PostID:      row.PostID,
 			Description: row.Description,
 			CreatedAt:   row.CreatedAt.Time,
 			UpdatedAt:   row.UpdatedAt.Time,

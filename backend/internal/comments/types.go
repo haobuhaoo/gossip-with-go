@@ -19,9 +19,9 @@ type Service interface {
 // Comment model that is passed to the frontend.
 type Comment struct {
 	CommentID   int64     `json:"comment_id"`
+	PostID      int64     `json:"post_id"`
 	UserID      int64     `json:"user_id"`
 	Username    string    `json:"username"`
-	PostID      int64     `json:"post_id"`
 	Description string    `json:"description"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`

@@ -85,8 +85,8 @@ func (h *handler) CreateComment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	newComment := repo.CreateCommentParams{
-		UserID:      req.UserID,
 		PostID:      req.PostID,
+		UserID:      req.UserID,
 		Description: req.Description,
 	}
 	comment, err := h.service.CreateComment(r.Context(), newComment)

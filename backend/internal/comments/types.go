@@ -29,9 +29,8 @@ type Comment struct {
 
 // CreateCommentRequest handles the comment related HTTP request body for creation of a new comment.
 type CreateCommentRequest struct {
-	UserID      int64  `json:"userId" validate:"required,min=1"`
-	Username    string `json:"username" validate:"required"`
 	PostID      int64  `json:"postId" validate:"required,min=1"`
+	UserID      int64  `json:"userId" validate:"required,min=1"`
 	Description string `json:"description" validate:"required"`
 }
 

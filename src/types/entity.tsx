@@ -25,3 +25,5 @@ export interface Comment {
     created_at: string;
     updated_at: string;
 }
+
+export type Entity = Topic | Post | Comment;

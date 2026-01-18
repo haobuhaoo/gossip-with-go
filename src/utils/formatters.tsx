@@ -10,7 +10,6 @@ export function truncate(str: string, maxLength?: number): string {
 
 /**
  * Displays the time that lapsed from the `date` in seconds, minutes, hours, days or years.
- * @returns A string that indicates how much time have passed from now.
  */
 export function showLastUpdated(date: string): string {
     type TimeUnit = "second" | "minute" | "hour" | "day" | "year";
@@ -37,4 +36,11 @@ export function showLastUpdated(date: string): string {
 
     const years: number = Math.floor(days / 365);
     return format(years, "year");
+}
+
+/**
+ * Slices and returns the first 2 characters of `username`.
+ */
+export function showInitial(username: string): string {
+    return username.slice(0, 2);
 }

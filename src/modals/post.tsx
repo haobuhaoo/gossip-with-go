@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Box, Button, Dialog, DialogTitle, TextField } from "@mui/material";
-import CloseIcon from '@mui/icons-material/Close';
 
 import type { Post } from "../types/entity";
+
+import CloseModalButton from "../components/closemodalbutton";
 
 type Props = {
     /**
@@ -31,7 +32,7 @@ type Props = {
     onCreate: (title: string, description: string) => void;
 
     /**
-     * Function that passes the updated `title` andor `description` to parent component,
+     * Function that passes the updated `title` and `description` to parent component,
      * along with its `postId` and `postUserId`.
      */
     onUpdate: (postId: number, postUserId: number, title: string, description: string) => void;
@@ -107,17 +108,7 @@ const PostModal: React.FC<Props> = ({ open, close, post, isUpdate, onCreate, onU
                 }}>
                 {isUpdate ? "Enter the new post" : "Enter a new post."}
             </DialogTitle>
-            <CloseIcon
-                onClick={close}
-                sx={{
-                    position: "absolute",
-                    top: 24,
-                    right: 20,
-                    fontSize: "24px",
-                    borderRadius: 10,
-                    cursor: "pointer",
-                    "&:hover": { backgroundColor: "lightgray", }
-                }} />
+            <CloseModalButton close={close} />
 
             <Box
                 component="form"

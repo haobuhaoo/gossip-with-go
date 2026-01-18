@@ -1,9 +1,10 @@
 import React from "react";
 import { Box, capitalize, Card, CardContent, Typography } from "@mui/material";
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
 
 import type { Topic } from "../types/entity";
+
+import DeleteButton from "../components/deletebutton";
+import EditButton from "../components/editbutton";
 
 type Props = {
     /**
@@ -74,30 +75,8 @@ const TopicListCard: React.FC<Props> = ({ topic, isUser, handleClick, openTopicM
                             paddingRight: "8px",
                             gap: "4px",
                         }}>
-                        <EditIcon
-                            onClick={(event: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
-                                event.stopPropagation();
-                                openTopicModal(topic);
-                            }}
-                            sx={{
-                                p: "3px",
-                                borderRadius: 10,
-                                color: "blue",
-                                "&:hover": { backgroundColor: "lightgrey" }
-                            }}
-                        />
-                        <DeleteIcon
-                            onClick={(event: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
-                                event.stopPropagation();
-                                onDelete(topic);
-                            }}
-                            sx={{
-                                p: "3px",
-                                borderRadius: 10,
-                                color: "red",
-                                "&:hover": { backgroundColor: "lightgrey" }
-                            }}
-                        />
+                        <EditButton<Topic> entity={topic} updateEntity={openTopicModal} />
+                        <DeleteButton<Topic> entity={topic} onDelete={onDelete} />
                     </Box>}
             </CardContent>
         </Card>

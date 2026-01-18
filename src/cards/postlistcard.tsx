@@ -1,12 +1,12 @@
 import React from "react";
 import { Box, capitalize, Card, CardContent, Divider, Typography } from "@mui/material";
-import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
-import PersonIcon from "@mui/icons-material/Person";
 
 import type { Post } from "../types/entity";
 
-import { showLastUpdated, truncate } from "../utils/formatters";
+import AvatarIcon from "../components/avataricon";
+import DeleteButton from "../components/deletebutton";
+import DisplayAuthor from "../components/displayauthor";
+import EditButton from "../components/editbutton";
 
 type Props = {
     /**
@@ -54,29 +54,9 @@ const PostListCard: React.FC<Props> = ({ post, isUser, handleClick, openPostModa
                 "&:hover": { boxShadow: "0 6px 12px rgba(0, 0, 0, 0.12)" },
             }}>
             <CardContent sx={{ display: "flex", flexDirection: "column" }}>
-                <Box sx={{ display: "flex", flexDirection: "row", gap: 2 }}>
-                    <Box
-                        sx={{
-                            display: "flex",
-                            justifyContent: "center",
-                            alignItems: "center",
-                            backgroundColor: "lightgrey",
-                            borderRadius: 10,
-                            height: "4ch",
-                            width: "4ch"
-                        }}>
-                        <PersonIcon />
-                    </Box>
-                    <Box
-                        sx={{
-                            display: "flex",
-                            justifyContent: "center",
-                            alignItems: "center",
-                        }}>
-                        <Typography>
-                            {truncate(capitalize(post.username))} • {showLastUpdated(post.updated_at)}
-                        </Typography>
-                    </Box>
+                <Box sx={{ display: "flex", flexDirection: "row", gap: 2, mx: "8px" }}>
+                    <AvatarIcon username={post.username} />
+                    <DisplayAuthor entity={post} />
 
                     {isUser &&
                         <Box
@@ -88,30 +68,8 @@ const PostListCard: React.FC<Props> = ({ post, isUser, handleClick, openPostModa
                                 paddingRight: "8px",
                                 gap: "4px",
                             }}>
-                            <EditIcon
-                                onClick={(event: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
-                                    event.stopPropagation();
-                                    openPostModal(post);
-                                }}
-                                sx={{
-                                    p: "3px",
-                                    borderRadius: 10,
-                                    color: "blue",
-                                    "&:hover": { backgroundColor: "lightgrey" }
-                                }}
-                            />
-                            <DeleteIcon
-                                onClick={(event: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
-                                    event.stopPropagation();
-                                    onDelete(post);
-                                }}
-                                sx={{
-                                    p: "3px",
-                                    borderRadius: 10,
-                                    color: "red",
-                                    "&:hover": { backgroundColor: "lightgrey" }
-                                }}
-                            />
+                            <EditButton<Post> entity={post} updateEntity={openPostModal} />
+                            <DeleteButton<Post> entity={post} onDelete={onDelete} />
                         </Box>}
                 </Box>
 
@@ -120,6 +78,7 @@ const PostListCard: React.FC<Props> = ({ post, isUser, handleClick, openPostModa
                         fontSize: "24px",
                         fontWeight: "bold",
                         paddingTop: "8px",
+                        mx: "8px",
                         display: "-webkit-box",
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: "vertical",
@@ -130,11 +89,12 @@ const PostListCard: React.FC<Props> = ({ post, isUser, handleClick, openPostModa
                     {capitalize(post.title)}
                 </Typography>
 
-                <Divider />
+                <Divider sx={{ mx: "8px" }} />
 
                 <Typography
                     sx={{
                         paddingTop: "8px",
+                        mx: "8px",
                         display: "-webkit-box",
                         WebkitLineClamp: 6,
                         WebkitBoxOrient: "vertical",

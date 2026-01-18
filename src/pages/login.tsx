@@ -13,9 +13,9 @@ const LoginPage: React.FC = () => {
     const [username, setUsername] = useState<string>("");
     const [isLogin, setIsLogin] = useState<boolean>(true);
     const [openSnackBar, setOpenSnackBar] = useState<boolean>(false);
-    const navigate = useNavigate();
     const usernameRef = useRef<HTMLInputElement | null>(null);
     const USERNAME_REGEX: RegExp = /^[a-zA-Z0-9._-]{3,50}$/;
+    const navigate = useNavigate();
 
     const handleButtonClick = () => {
         setIsLogin(!isLogin);
@@ -75,9 +75,7 @@ const LoginPage: React.FC = () => {
     };
 
     useEffect(() => {
-        if (error) {
-            setTimeout(() => setError(" "), 5000);
-        }
+        if (error) setTimeout(() => setError(" "), 5000);
     }, [error]);
 
     return (
@@ -120,7 +118,6 @@ const LoginPage: React.FC = () => {
                             color: "#FFF",
                             fontSize: "16px",
                             paddingY: 1
-
                         }}>
                         {isLogin ? "Don't have an account?" : "Already have an account?"}
                     </Typography>

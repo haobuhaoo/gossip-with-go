@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Box, Button, Dialog, DialogTitle, TextField } from "@mui/material";
-import CloseIcon from '@mui/icons-material/Close';
 
 import type { Topic } from "../types/entity";
+
+import CloseModalButton from "../components/closemodalbutton";
 
 type Props = {
     /**
@@ -96,17 +97,7 @@ const TopicModal: React.FC<Props> = ({ open, close, topic, isUpdate, onCreate, o
                 }}>
                 {isUpdate ? "Enter the new topic" : "Enter a new topic."}
             </DialogTitle>
-            <CloseIcon
-                onClick={close}
-                sx={{
-                    position: "absolute",
-                    top: 24,
-                    right: 20,
-                    fontSize: "24px",
-                    borderRadius: 10,
-                    cursor: "pointer",
-                    "&:hover": { backgroundColor: "lightgray", }
-                }} />
+            <CloseModalButton close={close} />
 
             <Box
                 component="form"

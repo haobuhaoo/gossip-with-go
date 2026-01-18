@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Alert, Button, capitalize, Snackbar, Typography } from "@mui/material";
-import AddIcon from '@mui/icons-material/Add';
-import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
+import { Alert, capitalize, Snackbar, Typography } from "@mui/material";
 
 import type { Topic } from "../types/entity";
 
 import EmptyList from "../cards/emptylist";
 import TopicListCard from "../cards/topiclistcard";
+import AddButton from "../components/addbutton";
+import BackButton from "../components/backbutton";
 import TopicModal from "../modals/topic";
 
 import axiosInstance from "../utils/axiosInstance";
@@ -19,7 +19,7 @@ import { truncate } from "../utils/formatters";
  * request to delete a selected topic.
  */
 const HomePage: React.FC = () => {
-    const [userId] = useState<string>(localStorage.getItem("token") ?? "");
+    const userId: string = localStorage.getItem("token") ?? "";
     const [topic, setTopic] = useState<Topic | null>(null);
     const [topiclist, setTopiclist] = useState<Topic[]>([]);
     const [isError, setIsError] = useState<boolean>(false);
@@ -200,21 +200,7 @@ const HomePage: React.FC = () => {
                 alignItems: "center",
                 flexDirection: "column",
             }}>
-            <Button
-                variant="outlined"
-                size="large"
-                onClick={handleBack}
-                sx={{
-                    position: "absolute",
-                    top: 48,
-                    left: 80,
-                    borderRadius: 3,
-                    fontSize: "20px",
-                    "&:hover": { backgroundColor: "#5aacfdff", color: "white" }
-                }}>
-                <ArrowBackIosIcon sx={{ fontSize: "20px" }} />
-                Back
-            </Button>
+            <BackButton handleBack={handleBack} />
 
             <Typography variant="h4" gutterBottom sx={{ fontWeight: "bold", marginTop: "32px" }}>
                 Click the topics below to share your insights.
@@ -223,21 +209,7 @@ const HomePage: React.FC = () => {
                 Or click the 'Add' button to add a new topic.
             </Typography>
 
-            <Button
-                variant="outlined"
-                size="large"
-                onClick={() => setOpenModal(true)}
-                sx={{
-                    position: "absolute",
-                    top: 48,
-                    right: 80,
-                    borderRadius: 3,
-                    fontSize: "20px",
-                    "&:hover": { backgroundColor: "#5aacfdff", color: "white" }
-                }}>
-                <AddIcon sx={{ display: "flex", fontSize: "24px", mr: 0.25 }} />
-                Add
-            </Button>
+            <AddButton setOpenModal={setOpenModal} />
 
             {(topiclist == null || topiclist.length == 0)
                 ? <EmptyList entity="topic" />

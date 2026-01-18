@@ -41,13 +41,13 @@ func NewHandler(service Service) *handler {
 func (h *handler) ListTopics(w http.ResponseWriter, r *http.Request) {
 	topics, err := h.service.ListTopics(r.Context())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	jsonTopic, err := json.Marshal(topics)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -62,24 +62,24 @@ func (h *handler) FindTopicByID(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		http.Error(w, InvalidTopicIdMessage, http.StatusBadRequest)
+		helper.WriteError(w, InvalidTopicIdMessage, http.StatusBadRequest)
 		return
 	}
 
 	topic, err := h.service.FindTopicByID(r.Context(), id)
 	if err != nil {
 		if err == ErrTopicNotFound {
-			http.Error(w, ErrTopicNotFound.Error(), http.StatusNotFound)
+			helper.WriteError(w, ErrTopicNotFound.Error(), http.StatusNotFound)
 			return
 		}
 
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	jsonTopic, err := json.Marshal(topic)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -94,13 +94,13 @@ func (h *handler) CreateTopic(w http.ResponseWriter, r *http.Request) {
 	var req CreateTopicRequest
 	err := helper.Read(r, &req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.WriteError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	err = validator.New().Struct(req)
 	if err != nil {
-		http.Error(w, InvalidRequestBodyMessage, http.StatusBadRequest)
+		helper.WriteError(w, InvalidRequestBodyMessage, http.StatusBadRequest)
 		return
 	}
 
@@ -111,17 +111,17 @@ func (h *handler) CreateTopic(w http.ResponseWriter, r *http.Request) {
 	topic, err := h.service.CreateTopic(r.Context(), newTopic)
 	if err != nil {
 		if err == ErrTopicAlreadyExists {
-			http.Error(w, ErrTopicAlreadyExists.Error(), http.StatusConflict)
+			helper.WriteError(w, ErrTopicAlreadyExists.Error(), http.StatusConflict)
 			return
 		}
 
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	jsonTopic, err := json.Marshal(topic)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -137,20 +137,20 @@ func (h *handler) UpdateTopic(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		http.Error(w, InvalidTopicIdMessage, http.StatusBadRequest)
+		helper.WriteError(w, InvalidTopicIdMessage, http.StatusBadRequest)
 		return
 	}
 
 	var req UpdateTopicRequest
 	err = helper.Read(r, &req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.WriteError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	err = validator.New().Struct(req)
 	if err != nil {
-		http.Error(w, InvalidRequestBodyMessage, http.StatusBadRequest)
+		helper.WriteError(w, InvalidRequestBodyMessage, http.StatusBadRequest)
 		return
 	}
 
@@ -161,21 +161,21 @@ func (h *handler) UpdateTopic(w http.ResponseWriter, r *http.Request) {
 	topic, err := h.service.UpdateTopic(r.Context(), newTopic)
 	if err != nil {
 		if err == ErrTopicNotFound {
-			http.Error(w, ErrTopicNotFound.Error(), http.StatusNotFound)
+			helper.WriteError(w, ErrTopicNotFound.Error(), http.StatusNotFound)
 			return
 		}
 		if err == ErrTopicAlreadyExists {
-			http.Error(w, ErrTopicAlreadyExists.Error(), http.StatusConflict)
+			helper.WriteError(w, ErrTopicAlreadyExists.Error(), http.StatusConflict)
 			return
 		}
 
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	jsonTopic, err := json.Marshal(topic)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -190,18 +190,18 @@ func (h *handler) DeleteTopic(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		http.Error(w, InvalidTopicIdMessage, http.StatusBadRequest)
+		helper.WriteError(w, InvalidTopicIdMessage, http.StatusBadRequest)
 		return
 	}
 
 	err = h.service.DeleteTopic(r.Context(), id)
 	if err != nil {
 		if err == ErrTopicNotFound {
-			http.Error(w, ErrTopicNotFound.Error(), http.StatusNotFound)
+			helper.WriteError(w, ErrTopicNotFound.Error(), http.StatusNotFound)
 			return
 		}
 
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 

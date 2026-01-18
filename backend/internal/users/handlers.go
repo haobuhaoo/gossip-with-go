@@ -3,6 +3,7 @@ package users
 import (
 	"encoding/json"
 	"net/http"
+	"regexp"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
@@ -11,6 +12,7 @@ import (
 
 const (
 	InvalidRequestBodyMessage   = "Required fields missing"
+	InvalidUsernameMessage      = "Only alphanumeric, period, hyphen, underscore allowed"
 	SuccessfulFindUserMessage   = "Successfully find user"
 	SuccessfulCreateUserMessage = "Successfully created user"
 )
@@ -37,17 +39,17 @@ func (h *handler) FindUserByName(w http.ResponseWriter, r *http.Request) {
 	user, err := h.service.FindUserByName(r.Context(), name)
 	if err != nil {
 		if err == ErrUserNotFound {
-			http.Error(w, ErrUserNotFound.Error(), http.StatusNotFound)
+			helper.WriteError(w, ErrUserNotFound.Error(), http.StatusNotFound)
 			return
 		}
 
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	jsonUser, err := json.Marshal(user)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -62,30 +64,36 @@ func (h *handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var req CreateUserRequest
 	err := helper.Read(r, &req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.WriteError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	err = validator.New().Struct(req)
 	if err != nil {
-		http.Error(w, InvalidRequestBodyMessage, http.StatusBadRequest)
+		helper.WriteError(w, InvalidRequestBodyMessage, http.StatusBadRequest)
+		return
+	}
+
+	var usernameRegex = regexp.MustCompile(`^[a-zA-Z0-9._-]{3,50}$`)
+	if !usernameRegex.MatchString(req.Name) {
+		helper.WriteError(w, InvalidUsernameMessage, http.StatusBadRequest)
 		return
 	}
 
 	user, err := h.service.CreateUser(r.Context(), req.Name)
 	if err != nil {
 		if err == ErrUserAlreadyExists {
-			http.Error(w, ErrUserAlreadyExists.Error(), http.StatusConflict)
+			helper.WriteError(w, ErrUserAlreadyExists.Error(), http.StatusConflict)
 			return
 		}
 
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	jsonUser, err := json.Marshal(user)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 

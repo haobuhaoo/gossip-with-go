@@ -18,3 +18,10 @@ func Read(r *http.Request, data any) error {
 	decoder.DisallowUnknownFields()
 	return decoder.Decode(data)
 }
+
+// WriteError encodes the error message and status code into a HTTP response.
+func WriteError(w http.ResponseWriter, msg string, code int) {
+	w.WriteHeader(code)
+	response := ParseErrorResponseMessage(msg, code)
+	Write(w, response)
+}

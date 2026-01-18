@@ -43,24 +43,24 @@ func (h *handler) FindPostsByTopic(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "topicId")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		http.Error(w, topics.InvalidTopicIdMessage, http.StatusBadRequest)
+		helper.WriteError(w, topics.InvalidTopicIdMessage, http.StatusBadRequest)
 		return
 	}
 
 	posts, err := h.service.FindPostsByTopic(r.Context(), id)
 	if err != nil {
 		if err == topics.ErrTopicNotFound {
-			http.Error(w, topics.InvalidTopicIdMessage, http.StatusBadRequest)
+			helper.WriteError(w, topics.InvalidTopicIdMessage, http.StatusBadRequest)
 			return
 		}
 
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	jsonPost, err := json.Marshal(posts)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -75,24 +75,24 @@ func (h *handler) FindPostByID(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		http.Error(w, InvalidPostIdMessage, http.StatusBadRequest)
+		helper.WriteError(w, InvalidPostIdMessage, http.StatusBadRequest)
 		return
 	}
 
 	post, err := h.service.FindPostByID(r.Context(), id)
 	if err != nil {
 		if err == ErrPostNotFound {
-			http.Error(w, ErrPostNotFound.Error(), http.StatusNotFound)
+			helper.WriteError(w, ErrPostNotFound.Error(), http.StatusNotFound)
 			return
 		}
 
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	jsonPost, err := json.Marshal(post)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -107,13 +107,13 @@ func (h *handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 	var req CreatePostRequest
 	err := helper.Read(r, &req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.WriteError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	err = validator.New().Struct(req)
 	if err != nil {
-		http.Error(w, InvalidRequestBodyMessage, http.StatusBadRequest)
+		helper.WriteError(w, InvalidRequestBodyMessage, http.StatusBadRequest)
 		return
 	}
 
@@ -126,17 +126,17 @@ func (h *handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 	post, err := h.service.CreatePost(r.Context(), newPost)
 	if err != nil {
 		if err == ErrPostAlreadyExists {
-			http.Error(w, ErrPostAlreadyExists.Error(), http.StatusConflict)
+			helper.WriteError(w, ErrPostAlreadyExists.Error(), http.StatusConflict)
 			return
 		}
 
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	jsonPost, err := json.Marshal(post)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -151,19 +151,20 @@ func (h *handler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		http.Error(w, InvalidPostIdMessage, http.StatusBadRequest)
+		helper.WriteError(w, InvalidPostIdMessage, http.StatusBadRequest)
 		return
 	}
 
 	var req UpdatePostRequest
 	err = helper.Read(r, &req)
 	if err != nil {
-		http.Error(w, InvalidRequestBodyMessage, http.StatusBadRequest)
+		helper.WriteError(w, InvalidRequestBodyMessage, http.StatusBadRequest)
 		return
 	}
 
-	if !isValidPostReqBody(req) {
-		http.Error(w, InvalidRequestBodyMessage, http.StatusBadRequest)
+	err = validator.New().Struct(req)
+	if err != nil {
+		helper.WriteError(w, InvalidRequestBodyMessage, http.StatusBadRequest)
 		return
 	}
 
@@ -174,39 +175,27 @@ func (h *handler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 	}
 	post, err := h.service.UpdatePost(r.Context(), newPost)
 	if err != nil {
-		if err == InvalidRequstBody {
-			http.Error(w, InvalidRequstBody.Error(), http.StatusBadRequest)
-			return
-		}
 		if err == ErrPostNotFound {
-			http.Error(w, ErrPostNotFound.Error(), http.StatusNotFound)
+			helper.WriteError(w, ErrPostNotFound.Error(), http.StatusNotFound)
 			return
 		}
 		if err == ErrPostAlreadyExists {
-			http.Error(w, ErrPostAlreadyExists.Error(), http.StatusConflict)
+			helper.WriteError(w, ErrPostAlreadyExists.Error(), http.StatusConflict)
 			return
 		}
 
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	jsonPost, err := json.Marshal(post)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	response := helper.ParseResponseDataAndMessage(jsonPost, SuccessfulUpdatePostMessage)
 	helper.Write(w, response)
-}
-
-// isValidPostReqBody returns true if both title and description of the request body are not empty.
-func isValidPostReqBody(data UpdatePostRequest) bool {
-	if data.Title == "" && data.Description == "" {
-		return false
-	}
-	return true
 }
 
 // DeletePost handles DELETE /posts/{id} requests.
@@ -216,18 +205,18 @@ func (h *handler) DeletePost(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		http.Error(w, InvalidPostIdMessage, http.StatusBadRequest)
+		helper.WriteError(w, InvalidPostIdMessage, http.StatusBadRequest)
 		return
 	}
 
 	err = h.service.DeletePost(r.Context(), id)
 	if err != nil {
 		if err == ErrPostNotFound {
-			http.Error(w, ErrPostNotFound.Error(), http.StatusNotFound)
+			helper.WriteError(w, ErrPostNotFound.Error(), http.StatusNotFound)
 			return
 		}
 
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 

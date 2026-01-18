@@ -6,17 +6,18 @@ import (
 	repo "github.com/haobuhaoo/gossip-with-go/internal/postgresql/sqlc"
 	"github.com/haobuhaoo/gossip-with-go/internal/posts"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // svc implements the Service interface.
 // It depends on the sql generated Queries type to interact with the PostgreSQL database.
 type svc struct {
 	repo *repo.Queries
-	db   *pgx.Conn
+	db   *pgxpool.Pool
 }
 
 // NewService creates a new comment service.
-func NewService(repo *repo.Queries, db *pgx.Conn) Service {
+func NewService(repo *repo.Queries, db *pgxpool.Pool) Service {
 	return &svc{
 		repo: repo,
 		db:   db,
@@ -24,13 +25,30 @@ func NewService(repo *repo.Queries, db *pgx.Conn) Service {
 }
 
 // FindCommentsByPost returns all comments of the given post id from the database.
-func (s *svc) FindCommentsByPost(ctx context.Context, id int64) ([]repo.Comment, error) {
+func (s *svc) FindCommentsByPost(ctx context.Context, id int64) ([]Comment, error) {
 	_, err := s.repo.FindPostByID(ctx, id)
 	if err != nil {
-		return []repo.Comment{}, posts.ErrPostNotFound
+		return []Comment{}, posts.ErrPostNotFound
 	}
 
-	return s.repo.FindCommentsByPost(ctx, id)
+	rows, err := s.repo.FindCommentsByPost(ctx, id)
+	if err != nil {
+		return []Comment{}, err
+	}
+
+	comments := make([]Comment, 0, len(rows))
+	for _, row := range rows {
+		comments = append(comments, Comment{
+			CommentID:   row.CommentID,
+			PostID:      row.PostID,
+			UserID:      row.UserID,
+			Username:    row.Username,
+			Description: row.Description,
+			CreatedAt:   row.CreatedAt.Time,
+			UpdatedAt:   row.UpdatedAt.Time,
+		})
+	}
+	return comments, nil
 }
 
 // CreateComment creates and returns a new comment with the given arg params. It then updates

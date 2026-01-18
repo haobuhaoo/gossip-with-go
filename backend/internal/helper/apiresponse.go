@@ -18,3 +18,11 @@ func ParseResponseMessage(msg string) api.Response {
 		Messages: []string{msg},
 	}
 }
+
+// ParseErrorResponseMessage packages the error message into an API Response.
+func ParseErrorResponseMessage(msg string, code int) api.Response {
+	return api.Response{
+		Messages: []string{msg},
+		ErrorCode: code,
+	}
+}

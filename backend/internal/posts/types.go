@@ -2,6 +2,7 @@ package posts
 
 import (
 	"context"
+	"time"
 
 	repo "github.com/haobuhaoo/gossip-with-go/internal/postgresql/sqlc"
 )
@@ -9,13 +10,23 @@ import (
 // Service defines the domain logic for post related operations.
 // It is responsible for enforcing application rules and making database calls.
 type Service interface {
-	FindPostsByTopic(ctx context.Context, id int64) ([]repo.Post, error)
-	FindPostByID(ctx context.Context, id int64) (repo.Post, error)
+	FindPostsByTopic(ctx context.Context, id int64) ([]Post, error)
+	FindPostByID(ctx context.Context, id int64) (Post, error)
 	CreatePost(ctx context.Context, arg repo.CreatePostParams) (repo.Post, error)
 	UpdatePost(ctx context.Context, arg repo.UpdatePostParams) (repo.Post, error)
-	UpdatePostTitle(ctx context.Context, arg repo.UpdatePostTitleParams) (repo.Post, error)
-	UpdatePostDescription(ctx context.Context, arg repo.UpdatePostDescriptionParams) (repo.Post, error)
 	DeletePost(ctx context.Context, id int64) error
+}
+
+// Post model that is passed to the frontend.
+type Post struct {
+	PostID      int64     `json:"post_id"`
+	TopicID     int64     `json:"topic_id"`
+	UserID      int64     `json:"user_id"`
+	Username    string    `json:"username"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 // CreatePostRequest handles the post related HTTP request body for creation of a new post.
@@ -28,6 +39,6 @@ type CreatePostRequest struct {
 
 // UpdatePostRequest handles the post related HTTP request body for updating of existing post.
 type UpdatePostRequest struct {
-	Title       string `json:"title"`
-	Description string `json:"description"`
+	Title       string `json:"title" validate:"required"`
+	Description string `json:"description" validate:"required"`
 }

@@ -7,18 +7,19 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	"github.com/haobuhaoo/gossip-with-go/internal/comments"
 	repo "github.com/haobuhaoo/gossip-with-go/internal/postgresql/sqlc"
 	"github.com/haobuhaoo/gossip-with-go/internal/posts"
 	"github.com/haobuhaoo/gossip-with-go/internal/topics"
 	"github.com/haobuhaoo/gossip-with-go/internal/users"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // application contains the configuration and database connection for the web server.
 type application struct {
 	config config
-	db     *pgx.Conn
+	db     *pgxpool.Pool
 }
 
 // config contains the server address string and database configurations.
@@ -36,22 +37,32 @@ type dbConfig struct {
 // It returns a chi.Router that can be used by the HTTP server.
 func (app *application) mount() http.Handler {
 	r := chi.NewRouter()
+
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:5173"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-type"},
+		AllowCredentials: true,
+		MaxAge:           300,
+	}))
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	userService := users.NewService(repo.New(app.db))
+	repo := repo.New(app.db)
+
+	userService := users.NewService(repo)
 	userHandler := users.NewHandler(userService)
 	users.Routes(r, userHandler)
 
-	topicService := topics.NewService(repo.New(app.db))
+	topicService := topics.NewService(repo)
 	topicHandler := topics.NewHandler(topicService)
 	topics.Routes(r, topicHandler)
 
-	postService := posts.NewService(repo.New(app.db))
+	postService := posts.NewService(repo)
 	postHandler := posts.NewHandler(postService)
 	posts.Routes(r, postHandler)
 
-	commentService := comments.NewService(repo.New(app.db), app.db)
+	commentService := comments.NewService(repo, app.db)
 	commentHandler := comments.NewHandler(commentService)
 	comments.Routes(r, commentHandler)
 

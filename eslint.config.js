@@ -32,16 +32,16 @@ export default [
       "import/order": [
         "error",
         {
-          groups: [
-            "index",
-            "sibling",
-            "parent",
-            "internal",
-            "external",
+          "groups": [
             "builtin",
-            "object",
-            "type",
+            "external",
+            "internal",
+            "parent",
+            "sibling",
+            "index",
+            "type"
           ],
+          "newlines-between": "always"
         },
       ],
       "prettier/prettier": ["error", { endOfLine: "auto" }],

@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Alert, Box, Button, Card, Snackbar, TextField, Typography } from "@mui/material";
+
+import { useAuth } from "../context/authcontext";
 
 import axiosInstance from "../utils/axiosInstance";
 
@@ -12,10 +14,14 @@ const LoginPage: React.FC = () => {
     const [error, setError] = useState<string>(" ");
     const [username, setUsername] = useState<string>("");
     const [isLogin, setIsLogin] = useState<boolean>(true);
+    const [message, setMessage] = useState<string>("");
+    const [isError, setIsError] = useState<boolean>(false);
     const [openSnackBar, setOpenSnackBar] = useState<boolean>(false);
     const usernameRef = useRef<HTMLInputElement | null>(null);
     const USERNAME_REGEX: RegExp = /^[a-zA-Z0-9._-]{3,50}$/;
+    const { setAuth } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const handleButtonClick = () => {
         setIsLogin(!isLogin);
@@ -50,6 +56,12 @@ const LoginPage: React.FC = () => {
                     if (res.data) {
                         localStorage.setItem("user", res.data.payload?.data?.name);
                         localStorage.setItem("token", res.data.payload?.data?.user_id);
+                        setAuth({
+                            username: res.data.payload?.data?.name,
+                            userId: res.data.payload?.data?.user_id,
+                            isAuthenticated: true,
+                            isLoading: false,
+                        })
                         navigate("/home");
                     }
                 })
@@ -62,6 +74,8 @@ const LoginPage: React.FC = () => {
                 .then(res => {
                     if (res.data) {
                         setUsername("");
+                        setIsError(false);
+                        setMessage("Registered successfully!")
                         setOpenSnackBar(true);
                         setTimeout(() => usernameRef.current?.focus(), 600);
                         setIsLogin(true);
@@ -75,8 +89,25 @@ const LoginPage: React.FC = () => {
     };
 
     useEffect(() => {
+        if (location.state) {
+            setIsError(true);
+            setMessage(location.state.message);
+            setOpenSnackBar(true);
+            setTimeout(() => {
+                setIsError(false);
+                setMessage("");
+                setOpenSnackBar(false);
+            }, 6000);
+            window.history.replaceState({}, document.title);
+        }
+
         if (error) setTimeout(() => setError(" "), 5000);
-    }, [error]);
+    }, [location.state, error]);
+
+    useEffect(() => {
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+    }, []);
 
     return (
         <div
@@ -194,9 +225,9 @@ const LoginPage: React.FC = () => {
                 onClose={() => setOpenSnackBar(false)}>
                 <Alert
                     onClose={() => setOpenSnackBar(false)}
-                    severity="success"
+                    severity={isError ? "error" : "success"}
                     variant="filled">
-                    Registered successfully!
+                    {message}
                 </Alert>
             </Snackbar>
         </div>

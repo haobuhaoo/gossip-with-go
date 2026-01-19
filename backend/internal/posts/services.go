@@ -51,8 +51,8 @@ func (s *svc) FindPostsByTopic(ctx context.Context, id int64) ([]Post, error) {
 }
 
 // FindPostByID returns a specific post identified by id from the database.
-func (s *svc) FindPostByID(ctx context.Context, id int64) (Post, error) {
-	rows, err := s.repo.FindPostByID(ctx, id)
+func (s *svc) FindPostByID(ctx context.Context, arg repo.FindPostByIDParams) (Post, error) {
+	rows, err := s.repo.FindPostByID(ctx, arg)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return Post{}, ErrPostNotFound

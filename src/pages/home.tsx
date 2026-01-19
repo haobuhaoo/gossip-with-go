@@ -4,6 +4,8 @@ import { Alert, capitalize, Snackbar, Typography } from "@mui/material";
 
 import type { Topic } from "../types/entity";
 
+import { useAuth } from "../context/authcontext";
+
 import EmptyList from "../cards/emptylist";
 import TopicListCard from "../cards/topiclistcard";
 import AddButton from "../components/addbutton";
@@ -27,6 +29,7 @@ const HomePage: React.FC = () => {
     const [openModal, setOpenModal] = useState<boolean>(false);
     const [isUpdate, setIsUpdate] = useState<boolean>(false);
     const [openSnackBar, setOpenSnackBar] = useState<boolean>(false);
+    const { setAuth } = useAuth();
     const navigate = useNavigate();
 
     const getAllTopics = () => {
@@ -47,6 +50,7 @@ const HomePage: React.FC = () => {
 
     const handleBack = () => {
         localStorage.clear();
+        setAuth({ username: "", userId: "", isAuthenticated: false, isLoading: false });
         navigate("/");
     };
 

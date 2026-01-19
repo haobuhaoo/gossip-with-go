@@ -11,7 +11,7 @@ import (
 // It is responsible for enforcing application rules and making database calls.
 type Service interface {
 	FindPostsByTopic(ctx context.Context, id int64) ([]Post, error)
-	FindPostByID(ctx context.Context, id int64) (Post, error)
+	FindPostByID(ctx context.Context, arg repo.FindPostByIDParams) (Post, error)
 	CreatePost(ctx context.Context, arg repo.CreatePostParams) (repo.Post, error)
 	UpdatePost(ctx context.Context, arg repo.UpdatePostParams) (repo.Post, error)
 	DeletePost(ctx context.Context, id int64) error

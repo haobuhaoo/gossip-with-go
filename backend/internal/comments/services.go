@@ -25,13 +25,13 @@ func NewService(repo *repo.Queries, db *pgxpool.Pool) Service {
 }
 
 // FindCommentsByPost returns all comments of the given post id from the database.
-func (s *svc) FindCommentsByPost(ctx context.Context, id int64) ([]Comment, error) {
-	_, err := s.repo.FindPostByID(ctx, id)
+func (s *svc) FindCommentsByPost(ctx context.Context, arg repo.FindPostByIDParams) ([]Comment, error) {
+	_, err := s.repo.FindPostByID(ctx, arg)
 	if err != nil {
 		return []Comment{}, posts.ErrPostNotFound
 	}
 
-	rows, err := s.repo.FindCommentsByPost(ctx, id)
+	rows, err := s.repo.FindCommentsByPost(ctx, arg.PostID)
 	if err != nil {
 		return []Comment{}, err
 	}

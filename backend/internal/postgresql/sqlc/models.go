@@ -10,8 +10,8 @@ import (
 
 type Comment struct {
 	CommentID   int64              `json:"comment_id"`
-	UserID      int64              `json:"user_id"`
 	PostID      int64              `json:"post_id"`
+	UserID      int64              `json:"user_id"`
 	Description string             `json:"description"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`

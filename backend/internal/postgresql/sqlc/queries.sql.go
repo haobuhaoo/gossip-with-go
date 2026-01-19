@@ -12,7 +12,7 @@ import (
 )
 
 const createComment = `-- name: CreateComment :one
-INSERT INTO Comments (user_id, post_id, description) VALUES ($1, $2, $3) RETURNING comment_id, user_id, post_id, description, created_at, updated_at
+INSERT INTO Comments (user_id, post_id, description) VALUES ($1, $2, $3) RETURNING comment_id, post_id, user_id, description, created_at, updated_at
 `
 
 type CreateCommentParams struct {
@@ -26,8 +26,8 @@ func (q *Queries) CreateComment(ctx context.Context, arg CreateCommentParams) (C
 	var i Comment
 	err := row.Scan(
 		&i.CommentID,
-		&i.UserID,
 		&i.PostID,
+		&i.UserID,
 		&i.Description,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -180,8 +180,13 @@ func (q *Queries) FindCommentsByPost(ctx context.Context, postID int64) ([]FindC
 
 const findPostByID = `-- name: FindPostByID :one
 SELECT p.post_id, p.topic_id, p.user_id, u.name AS username, p.title, p.description, p.created_at, p.updated_at
-FROM Posts p JOIN Users u ON u.user_id = p.user_id WHERE post_id = $1
+FROM Posts p JOIN Users u ON u.user_id = p.user_id WHERE post_id = $1 AND topic_id = $2
 `
+
+type FindPostByIDParams struct {
+	PostID  int64 `json:"post_id"`
+	TopicID int64 `json:"topic_id"`
+}
 
 type FindPostByIDRow struct {
 	PostID      int64              `json:"post_id"`
@@ -194,8 +199,8 @@ type FindPostByIDRow struct {
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
 
-func (q *Queries) FindPostByID(ctx context.Context, postID int64) (FindPostByIDRow, error) {
-	row := q.db.QueryRow(ctx, findPostByID, postID)
+func (q *Queries) FindPostByID(ctx context.Context, arg FindPostByIDParams) (FindPostByIDRow, error) {
+	row := q.db.QueryRow(ctx, findPostByID, arg.PostID, arg.TopicID)
 	var i FindPostByIDRow
 	err := row.Scan(
 		&i.PostID,
@@ -315,7 +320,7 @@ func (q *Queries) ListTopics(ctx context.Context) ([]Topic, error) {
 }
 
 const updateComment = `-- name: UpdateComment :one
-UPDATE Comments SET description = $3, updated_at = now() WHERE comment_id = $1 AND post_id = $2 RETURNING comment_id, user_id, post_id, description, created_at, updated_at
+UPDATE Comments SET description = $3, updated_at = now() WHERE comment_id = $1 AND post_id = $2 RETURNING comment_id, post_id, user_id, description, created_at, updated_at
 `
 
 type UpdateCommentParams struct {
@@ -329,8 +334,8 @@ func (q *Queries) UpdateComment(ctx context.Context, arg UpdateCommentParams) (C
 	var i Comment
 	err := row.Scan(
 		&i.CommentID,
-		&i.UserID,
 		&i.PostID,
+		&i.UserID,
 		&i.Description,
 		&i.CreatedAt,
 		&i.UpdatedAt,

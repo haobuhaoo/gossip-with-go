@@ -21,7 +21,7 @@ const PostPage: React.FC = () => {
     const userId: string = localStorage.getItem("token") ?? "";
     const topicId: string = useParams().topicId ?? "";
     const postId: string = useParams().postId ?? "";
-    const [post, setPost] = useState<Post>();
+    const [post, setPost] = useState<Post | null>(null);
     const [commentList, setCommentList] = useState<Comment[]>([]);
     const [isError, setIsError] = useState<boolean>(false);
     const [message, setMessage] = useState<string>("");
@@ -29,8 +29,8 @@ const PostPage: React.FC = () => {
     const [openSnackBar, setOpenSnackBar] = useState<boolean>(false);
     const navigate = useNavigate();
 
-    const getPost = (id: string) => {
-        axiosInstance.get(`/posts/${id}`)
+    const getPost = (topicId: string, postId: string) => {
+        axiosInstance.get(`/posts/${topicId}/${postId}`)
             .then(res => {
                 if (res.data) {
                     setIsError(false);
@@ -45,8 +45,8 @@ const PostPage: React.FC = () => {
             })
     };
 
-    const getAllComments = (id: string) => {
-        axiosInstance.get(`/comments/all/${id}`)
+    const getAllComments = (topicId: string, postId: string) => {
+        axiosInstance.get(`/comments/all/${topicId}/${postId}`)
             .then(res => {
                 if (res.data) {
                     setIsError(false);
@@ -108,7 +108,7 @@ const PostPage: React.FC = () => {
                 if (res.data) {
                     setMessage("Updated " + capitalize(title));
                     setIsError(false);
-                    getPost(postId.toString());
+                    getPost(topicId, postId.toString());
                 }
             })
             .catch(err => {
@@ -143,8 +143,8 @@ const PostPage: React.FC = () => {
                 if (res.data) {
                     setMessage("Comment successfully!");
                     setIsError(false);
-                    getPost(postId);
-                    getAllComments(postId);
+                    getPost(topicId, postId);
+                    getAllComments(topicId, postId);
                 }
             })
             .catch(err => {
@@ -183,8 +183,8 @@ const PostPage: React.FC = () => {
                 if (res.data) {
                     setMessage("Comment updated!");
                     setIsError(false);
-                    getPost(postId);
-                    getAllComments(postId);
+                    getPost(topicId, postId);
+                    getAllComments(topicId, postId);
                 }
             })
             .catch(err => {
@@ -222,8 +222,8 @@ const PostPage: React.FC = () => {
                 if (res.data) {
                     setIsError(false);
                     setMessage("Comment deleted!");
-                    getPost(postId);
-                    getAllComments(postId);
+                    getPost(topicId, postId);
+                    getAllComments(topicId, postId);
                 }
             })
             .catch(err => {
@@ -238,18 +238,10 @@ const PostPage: React.FC = () => {
         setIsError(false);
         setMessage("");
         if (postId) {
-            getPost(postId);
-            getAllComments(postId);
+            getPost(topicId, postId);
+            getAllComments(topicId, postId);
         }
     }, [postId]);
-
-    if (!post) {
-        return (
-            <div style={{ marginTop: "32px" }}>
-                <EmptyList entity="post" />
-            </div>
-        );
-    }
 
     return (
         <div
@@ -265,15 +257,17 @@ const PostPage: React.FC = () => {
                 Topic: {truncate(capitalize(post?.title ?? ""), 42)}
             </Typography>
 
-            {post &&
-                <PostCard
+            {post
+                ? <PostCard
                     post={post}
                     commentList={commentList}
                     openPostModal={openPostModal}
                     onCreate={onCreate}
                     onUpdate={onUpdate}
                     onDelete={onDelete}
-                />}
+                />
+                : <EmptyList entity="post" />
+            }
 
             <div style={{ margin: "20px" }} />
 

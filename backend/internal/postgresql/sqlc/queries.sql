@@ -21,6 +21,9 @@ UPDATE Topics SET title = $2 WHERE topic_id = $1 RETURNING *;
 -- name: DeleteTopic :execrows
 DELETE FROM Topics WHERE topic_id = $1;
 
+-- name: SearchTopic :many
+SELECT * FROM Topics WHERE title ILIKE '%' || $1 ||'%' ORDER BY title;
+
 -- Posts Queries
 -- name: FindPostsByTopic :many
 SELECT p.post_id, p.topic_id, p.user_id, u.name AS username, p.title, p.description, p.created_at, p.updated_at
@@ -41,6 +44,10 @@ UPDATE Posts SET updated_at = now() WHERE post_id = $1 RETURNING *;
 
 -- name: DeletePost :execrows
 DELETE FROM Posts WHERE post_id = $1;
+
+-- name: SearchPost :many
+SELECT * FROM Posts WHERE topic_id = $1 AND
+(title ILIKE '%' || $2 ||'%' OR description ILIKE '%' || $2 ||'%') ORDER BY updated_at DESC;
 
 -- Comments Queries
 -- name: FindCommentsByPost :many

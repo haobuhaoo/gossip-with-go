@@ -117,3 +117,9 @@ func (s *svc) DeletePost(ctx context.Context, id int64) error {
 
 	return nil
 }
+
+// SearchPost searches all post titles and descriptions under the specific topic that contains the
+// search query (case-insensitive) and returns all matched posts.
+func (s *svc) SearchPost(ctx context.Context, arg repo.SearchPostParams) ([]repo.Post, error) {
+	return s.repo.SearchPost(ctx, arg)
+}

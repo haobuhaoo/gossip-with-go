@@ -15,6 +15,7 @@ type Service interface {
 	CreatePost(ctx context.Context, arg repo.CreatePostParams) (repo.Post, error)
 	UpdatePost(ctx context.Context, arg repo.UpdatePostParams) (repo.Post, error)
 	DeletePost(ctx context.Context, id int64) error
+	SearchPost(ctx context.Context, arg repo.SearchPostParams) ([]repo.Post, error)
 }
 
 // Post model that is passed to the frontend.

@@ -10,17 +10,20 @@ import (
 	"github.com/haobuhaoo/gossip-with-go/internal/helper"
 	repo "github.com/haobuhaoo/gossip-with-go/internal/postgresql/sqlc"
 	"github.com/haobuhaoo/gossip-with-go/internal/topics"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const (
-	InvalidTopicIdMessage            = "Invalid topic id"
-	InvalidPostIdMessage             = "Invalid post id"
-	InvalidRequestBodyMessage        = "Required fields missing"
-	SuccessfulFindPostByTopicMessage = "Successfully listed all posts"
-	SuccessfulFindPostByIdMessage    = "Successfully find post"
-	SuccessfulCreatePostMessage      = "Successfully created post"
-	SuccessfulUpdatePostMessage      = "Successfully updated post"
-	SuccessfulDeletePostMessage      = "Successfully deleted post"
+	InvalidTopicIdMessage              = "Invalid topic id"
+	InvalidPostIdMessage               = "Invalid post id"
+	InvalidRequestBodyMessage          = "Required fields missing"
+	InvalidQueryMessage                = "Query string missing"
+	SuccessfulFindPostByTopicMessage   = "Successfully listed all posts"
+	SuccessfulFindPostByIdMessage      = "Successfully find post"
+	SuccessfulCreatePostMessage        = "Successfully created post"
+	SuccessfulUpdatePostMessage        = "Successfully updated post"
+	SuccessfulDeletePostMessage        = "Successfully deleted post"
+	SuccessfulSearchPostByTopicMessage = "Successfully searched post"
 )
 
 // handler handles the post related HTTP requests.
@@ -233,5 +236,46 @@ func (h *handler) DeletePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := helper.ParseResponseMessage(SuccessfulDeletePostMessage)
+	helper.Write(w, response)
+}
+
+// SearchPost handles GET /{topicId}/search requests.
+// It parses the topicId and query string, and passes it to the post service to search for all
+// post titles and descriptions under the specified topic that contains the query string
+// (case-insensitive), which then serializes the result into a JSON HTTP response.
+func (h *handler) SearchPost(w http.ResponseWriter, r *http.Request) {
+	topicIdStr := chi.URLParam(r, "topicId")
+	topicId, err := strconv.ParseInt(topicIdStr, 10, 64)
+	if err != nil {
+		helper.WriteError(w, InvalidTopicIdMessage, http.StatusBadRequest)
+		return
+	}
+
+	rawQuery := r.URL.Query().Get("q")
+	if rawQuery == "" {
+		helper.WriteError(w, InvalidQueryMessage, http.StatusBadRequest)
+		return
+	}
+
+	arg := repo.SearchPostParams{
+		TopicID: topicId,
+		Column2: pgtype.Text{
+			String: rawQuery,
+			Valid:  true,
+		},
+	}
+	posts, err := h.service.SearchPost(r.Context(), arg)
+	if err != nil {
+		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	jsonPost, err := json.Marshal(posts)
+	if err != nil {
+		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	response := helper.ParseResponseDataAndMessage(jsonPost, SuccessfulSearchPostByTopicMessage)
 	helper.Write(w, response)
 }

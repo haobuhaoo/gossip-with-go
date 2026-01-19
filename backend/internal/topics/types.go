@@ -4,6 +4,7 @@ import (
 	"context"
 
 	repo "github.com/haobuhaoo/gossip-with-go/internal/postgresql/sqlc"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // Service defines the domain logic for topic related operations.
@@ -14,6 +15,7 @@ type Service interface {
 	CreateTopic(ctx context.Context, arg repo.CreateTopicParams) (repo.Topic, error)
 	UpdateTopic(ctx context.Context, arg repo.UpdateTopicParams) (repo.Topic, error)
 	DeleteTopic(ctx context.Context, id int64) error
+	SearchTopic(ctx context.Context, query pgtype.Text) ([]repo.Topic, error)
 }
 
 // CreateTopicRequest handles the topic related HTTP request body for creation of a new topic.

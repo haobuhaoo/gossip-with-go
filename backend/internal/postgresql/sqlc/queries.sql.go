@@ -319,6 +319,73 @@ func (q *Queries) ListTopics(ctx context.Context) ([]Topic, error) {
 	return items, nil
 }
 
+const searchPost = `-- name: SearchPost :many
+SELECT post_id, topic_id, user_id, title, description, created_at, updated_at FROM Posts WHERE topic_id = $1 AND
+(title ILIKE '%' || $2 ||'%' OR description ILIKE '%' || $2 ||'%') ORDER BY updated_at DESC
+`
+
+type SearchPostParams struct {
+	TopicID int64       `json:"topic_id"`
+	Column2 pgtype.Text `json:"column_2"`
+}
+
+func (q *Queries) SearchPost(ctx context.Context, arg SearchPostParams) ([]Post, error) {
+	rows, err := q.db.Query(ctx, searchPost, arg.TopicID, arg.Column2)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Post
+	for rows.Next() {
+		var i Post
+		if err := rows.Scan(
+			&i.PostID,
+			&i.TopicID,
+			&i.UserID,
+			&i.Title,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const searchTopic = `-- name: SearchTopic :many
+SELECT topic_id, user_id, title, created_at FROM Topics WHERE title ILIKE '%' || $1 ||'%' ORDER BY title
+`
+
+func (q *Queries) SearchTopic(ctx context.Context, dollar_1 pgtype.Text) ([]Topic, error) {
+	rows, err := q.db.Query(ctx, searchTopic, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Topic
+	for rows.Next() {
+		var i Topic
+		if err := rows.Scan(
+			&i.TopicID,
+			&i.UserID,
+			&i.Title,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateComment = `-- name: UpdateComment :one
 UPDATE Comments SET description = $3, updated_at = now() WHERE comment_id = $1 AND post_id = $2 RETURNING comment_id, post_id, user_id, description, created_at, updated_at
 `

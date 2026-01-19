@@ -6,6 +6,7 @@ import "github.com/go-chi/chi/v5"
 // It connects the URLS to their respective handler methods.
 func Routes(router chi.Router, h *handler) {
 	router.Route("/topics", func(r chi.Router) {
+		r.Get("/search", h.SearchTopic)
 		r.Get("/", h.ListTopics)
 		r.Get("/{id}", h.FindTopicByID)
 		r.Post("/", h.CreateTopic)

@@ -9,16 +9,19 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/haobuhaoo/gossip-with-go/internal/helper"
 	repo "github.com/haobuhaoo/gossip-with-go/internal/postgresql/sqlc"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const (
 	InvalidTopicIdMessage        = "Invalid topic id"
 	InvalidRequestBodyMessage    = "Required fields missing"
+	InvalidQueryMessage          = "Query string missing"
 	SuccessfulListTopicMessage   = "Successfully listed all topics"
 	SuccessfulFindTopicMessage   = "Successfully find topic"
 	SuccessfulCreateTopicMessage = "Successfully created topic"
 	SuccessfulUpdateTopicMessage = "Successfully updated topic"
 	SuccessfulDeleteTopicMessage = "Successfully deleted topic"
+	SuccessfulSearchTopicMessage = "Successfully searched topic"
 )
 
 // handler handles the topic related HTTP requests.
@@ -206,5 +209,36 @@ func (h *handler) DeleteTopic(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := helper.ParseResponseMessage(SuccessfulDeleteTopicMessage)
+	helper.Write(w, response)
+}
+
+// SearchTopic handles GET /search requests.
+// It parses the query string and passes it to the topic service to search for all topic titles
+// that contains the query string (case-insensitive), which then serializes the result into a
+// JSON HTTP response.
+func (h *handler) SearchTopic(w http.ResponseWriter, r *http.Request) {
+	rawQuery := r.URL.Query().Get("q")
+	if rawQuery == "" {
+		helper.WriteError(w, InvalidQueryMessage, http.StatusBadRequest)
+		return
+	}
+
+	query := pgtype.Text{
+		String: rawQuery,
+		Valid:  true,
+	}
+	topic, err := h.service.SearchTopic(r.Context(), query)
+	if err != nil {
+		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	jsonTopic, err := json.Marshal(topic)
+	if err != nil {
+		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	response := helper.ParseResponseDataAndMessage(jsonTopic, SuccessfulSearchTopicMessage)
 	helper.Write(w, response)
 }

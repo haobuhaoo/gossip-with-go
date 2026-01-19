@@ -6,6 +6,7 @@ import (
 	"github.com/haobuhaoo/gossip-with-go/internal/helper"
 	repo "github.com/haobuhaoo/gossip-with-go/internal/postgresql/sqlc"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // svc implements the Service interface.
@@ -81,4 +82,10 @@ func (s *svc) DeleteTopic(ctx context.Context, id int64) error {
 	}
 
 	return nil
+}
+
+// SearchTopic searches all topic titles that contains the search query (case-insensitive)
+// and returns all matched topics.
+func (s *svc) SearchTopic(ctx context.Context, query pgtype.Text) ([]repo.Topic, error) {
+	return s.repo.SearchTopic(ctx, query)
 }

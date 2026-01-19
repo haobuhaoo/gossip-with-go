@@ -13,6 +13,7 @@ import (
 )
 
 const (
+	InvalidTopicIdMessage            = "Invalid topic id"
 	InvalidPostIdMessage             = "Invalid post id"
 	InvalidRequestBodyMessage        = "Required fields missing"
 	SuccessfulFindPostByTopicMessage = "Successfully listed all posts"
@@ -68,18 +69,29 @@ func (h *handler) FindPostsByTopic(w http.ResponseWriter, r *http.Request) {
 	helper.Write(w, response)
 }
 
-// FindPostByID handles GET /posts/{id} requests.
+// FindPostByID handles GET /posts/{topicId}/{postId} requests.
 // It parses the id string, and passes it to the post service to return the specified post,
 // which then serializes the result into a JSON HTTP response.
 func (h *handler) FindPostByID(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
+	topicIdStr := chi.URLParam(r, "topicId")
+	topicId, err := strconv.ParseInt(topicIdStr, 10, 64)
+	if err != nil {
+		helper.WriteError(w, InvalidTopicIdMessage, http.StatusBadRequest)
+		return
+	}
+
+	postIdStr := chi.URLParam(r, "postId")
+	postId, err := strconv.ParseInt(postIdStr, 10, 64)
 	if err != nil {
 		helper.WriteError(w, InvalidPostIdMessage, http.StatusBadRequest)
 		return
 	}
 
-	post, err := h.service.FindPostByID(r.Context(), id)
+	req := repo.FindPostByIDParams{
+		TopicID: topicId,
+		PostID:  postId,
+	}
+	post, err := h.service.FindPostByID(r.Context(), req)
 	if err != nil {
 		if err == ErrPostNotFound {
 			helper.WriteError(w, ErrPostNotFound.Error(), http.StatusNotFound)

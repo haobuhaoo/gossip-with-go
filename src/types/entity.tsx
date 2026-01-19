@@ -1,3 +1,10 @@
+export interface User {
+    username: string;
+    userId: string;
+    isAuthenticated: boolean;
+    isLoading: boolean;
+};
+
 export interface Topic {
     topic_id: number;
     title: string;

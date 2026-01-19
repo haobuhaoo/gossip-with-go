@@ -35,18 +35,29 @@ func NewHandler(service Service) *handler {
 	}
 }
 
-// FindCommentsByPost handles GET /comments/all/{postId} requests.
+// FindCommentsByPost handles GET /comments/all//{topicId}/{postId} requests.
 // It parses the postId string, and passes it to the comment service to return all comments for that post,
 // and serializes the result into a JSON HTTP response.
 func (h *handler) FindCommentsByPost(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "postId")
-	id, err := strconv.ParseInt(idStr, 10, 64)
+	topicIdStr := chi.URLParam(r, "topicId")
+	topicId, err := strconv.ParseInt(topicIdStr, 10, 64)
+	if err != nil {
+		helper.WriteError(w, posts.InvalidTopicIdMessage, http.StatusBadRequest)
+		return
+	}
+
+	postIdStr := chi.URLParam(r, "postId")
+	postId, err := strconv.ParseInt(postIdStr, 10, 64)
 	if err != nil {
 		helper.WriteError(w, posts.InvalidPostIdMessage, http.StatusBadRequest)
 		return
 	}
 
-	comments, err := h.service.FindCommentsByPost(r.Context(), id)
+	req := repo.FindPostByIDParams{
+		TopicID: topicId,
+		PostID:  postId,
+	}
+	comments, err := h.service.FindCommentsByPost(r.Context(), req)
 	if err != nil {
 		if err == posts.ErrPostNotFound {
 			helper.WriteError(w, posts.InvalidPostIdMessage, http.StatusBadRequest)

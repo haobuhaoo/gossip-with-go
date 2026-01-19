@@ -28,7 +28,7 @@ FROM Posts p JOIN Users u ON u.user_id = p.user_id WHERE p.topic_id = $1 ORDER B
 
 -- name: FindPostByID :one
 SELECT p.post_id, p.topic_id, p.user_id, u.name AS username, p.title, p.description, p.created_at, p.updated_at
-FROM Posts p JOIN Users u ON u.user_id = p.user_id WHERE post_id = $1;
+FROM Posts p JOIN Users u ON u.user_id = p.user_id WHERE post_id = $1 AND topic_id = $2;
 
 -- name: CreatePost :one
 INSERT INTO Posts (topic_id, user_id, title, description) VALUES ($1, $2, $3, $4) RETURNING *;

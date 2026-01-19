@@ -10,7 +10,7 @@ import (
 // Service defines the domain logic for comment related operations.
 // It is responsible for enforcing application rules and making database calls.
 type Service interface {
-	FindCommentsByPost(ctx context.Context, id int64) ([]Comment, error)
+	FindCommentsByPost(ctx context.Context, arg repo.FindPostByIDParams) ([]Comment, error)
 	CreateComment(ctx context.Context, arg repo.CreateCommentParams) (repo.Comment, error)
 	UpdateComment(ctx context.Context, arg repo.UpdateCommentParams) (repo.Comment, error)
 	DeleteComment(ctx context.Context, id int64) error

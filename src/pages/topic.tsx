@@ -8,6 +8,7 @@ import EmptyList from "../cards/emptylist";
 import PostListCard from "../cards/postlistcard";
 import AddButton from "../components/addbutton";
 import BackButton from "../components/backbutton";
+import SearchBar from "../components/searchbar";
 import PostModal from "../modals/post";
 
 import axiosInstance from "../utils/axiosInstance";
@@ -233,6 +234,15 @@ const TopicPage: React.FC = () => {
             </Typography>
 
             <AddButton setOpenModal={setOpenModal} />
+
+            <SearchBar<Post>
+                isTopic={false}
+                topicId={topicId}
+                setEntity={setPostlist}
+                setMessage={setMessage}
+                setIsError={setIsError}
+                setOpenSnackBar={setOpenSnackBar}
+            />
 
             {(postlist == null || postlist.length == 0)
                 ? <EmptyList entity="post" />

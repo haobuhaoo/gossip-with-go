@@ -10,6 +10,7 @@ import EmptyList from "../cards/emptylist";
 import TopicListCard from "../cards/topiclistcard";
 import AddButton from "../components/addbutton";
 import BackButton from "../components/backbutton";
+import SearchBar from "../components/searchbar";
 import TopicModal from "../modals/topic";
 
 import axiosInstance from "../utils/axiosInstance";
@@ -214,6 +215,14 @@ const HomePage: React.FC = () => {
             </Typography>
 
             <AddButton setOpenModal={setOpenModal} />
+
+            <SearchBar<Topic>
+                isTopic={true}
+                setEntity={setTopiclist}
+                setMessage={setMessage}
+                setIsError={setIsError}
+                setOpenSnackBar={setOpenSnackBar}
+            />
 
             {(topiclist == null || topiclist.length == 0)
                 ? <EmptyList entity="topic" />

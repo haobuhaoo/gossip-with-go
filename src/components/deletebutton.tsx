@@ -29,12 +29,7 @@ const DeleteButton = <T extends Entity,>({ entity, onDelete }: Props<T>) => {
         <IconButton
             onClick={handleClick}
             aria-label="delete"
-            sx={{
-                p: "3px",
-                borderRadius: 10,
-                color: "red",
-                "&:hover": { backgroundColor: "lightgrey" }
-            }}>
+            sx={{ p: "3px", borderRadius: 10, color: "red" }}>
             <DeleteIcon />
         </IconButton>
     )

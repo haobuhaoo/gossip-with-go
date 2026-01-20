@@ -29,12 +29,7 @@ const EditButton = <T extends Entity,>({ entity, updateEntity }: Props<T>) => {
         <IconButton
             onClick={handleClick}
             aria-label="edit"
-            sx={{
-                p: "3px",
-                borderRadius: 10,
-                color: "blue",
-                "&:hover": { backgroundColor: "lightgrey" }
-            }}>
+            sx={{ p: "3px", borderRadius: 10, color: "blue" }}>
             <EditIcon />
         </IconButton>
     )

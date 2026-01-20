@@ -46,8 +46,9 @@ UPDATE Posts SET updated_at = now() WHERE post_id = $1 RETURNING *;
 DELETE FROM Posts WHERE post_id = $1;
 
 -- name: SearchPost :many
-SELECT * FROM Posts WHERE topic_id = $1 AND
-(title ILIKE '%' || $2 ||'%' OR description ILIKE '%' || $2 ||'%') ORDER BY updated_at DESC;
+SELECT p.post_id, p.topic_id, p.user_id, u.name AS username, p.title, p.description, p.created_at, p.updated_at
+FROM Posts p JOIN Users u ON u.user_id = p.user_id WHERE p.topic_id = $1 AND
+(p.title ILIKE '%' || $2 ||'%' OR p.description ILIKE '%' || $2 ||'%') ORDER BY p.updated_at DESC;
 
 -- Comments Queries
 -- name: FindCommentsByPost :many

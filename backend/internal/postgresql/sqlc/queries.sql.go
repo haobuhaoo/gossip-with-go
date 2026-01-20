@@ -320,8 +320,9 @@ func (q *Queries) ListTopics(ctx context.Context) ([]Topic, error) {
 }
 
 const searchPost = `-- name: SearchPost :many
-SELECT post_id, topic_id, user_id, title, description, created_at, updated_at FROM Posts WHERE topic_id = $1 AND
-(title ILIKE '%' || $2 ||'%' OR description ILIKE '%' || $2 ||'%') ORDER BY updated_at DESC
+SELECT p.post_id, p.topic_id, p.user_id, u.name AS username, p.title, p.description, p.created_at, p.updated_at
+FROM Posts p JOIN Users u ON u.user_id = p.user_id WHERE p.topic_id = $1 AND
+(p.title ILIKE '%' || $2 ||'%' OR p.description ILIKE '%' || $2 ||'%') ORDER BY p.updated_at DESC
 `
 
 type SearchPostParams struct {
@@ -329,19 +330,31 @@ type SearchPostParams struct {
 	Column2 pgtype.Text `json:"column_2"`
 }
 
-func (q *Queries) SearchPost(ctx context.Context, arg SearchPostParams) ([]Post, error) {
+type SearchPostRow struct {
+	PostID      int64              `json:"post_id"`
+	TopicID     int64              `json:"topic_id"`
+	UserID      int64              `json:"user_id"`
+	Username    string             `json:"username"`
+	Title       string             `json:"title"`
+	Description string             `json:"description"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) SearchPost(ctx context.Context, arg SearchPostParams) ([]SearchPostRow, error) {
 	rows, err := q.db.Query(ctx, searchPost, arg.TopicID, arg.Column2)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Post
+	var items []SearchPostRow
 	for rows.Next() {
-		var i Post
+		var i SearchPostRow
 		if err := rows.Scan(
 			&i.PostID,
 			&i.TopicID,
 			&i.UserID,
+			&i.Username,
 			&i.Title,
 			&i.Description,
 			&i.CreatedAt,

@@ -120,6 +120,24 @@ func (s *svc) DeletePost(ctx context.Context, id int64) error {
 
 // SearchPost searches all post titles and descriptions under the specific topic that contains the
 // search query (case-insensitive) and returns all matched posts.
-func (s *svc) SearchPost(ctx context.Context, arg repo.SearchPostParams) ([]repo.Post, error) {
-	return s.repo.SearchPost(ctx, arg)
+func (s *svc) SearchPost(ctx context.Context, arg repo.SearchPostParams) ([]Post, error) {
+	rows, err := s.repo.SearchPost(ctx, arg)
+	if err != nil {
+		return []Post{}, err
+	}
+
+	posts := make([]Post, 0, len(rows))
+	for _, row := range rows {
+		posts = append(posts, Post{
+			PostID:      row.PostID,
+			TopicID:     row.TopicID,
+			UserID:      row.UserID,
+			Username:    row.Username,
+			Title:       row.Title,
+			Description: row.Description,
+			CreatedAt:   row.CreatedAt.Time,
+			UpdatedAt:   row.UpdatedAt.Time,
+		})
+	}
+	return posts, nil
 }

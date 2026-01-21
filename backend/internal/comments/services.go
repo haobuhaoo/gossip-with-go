@@ -68,7 +68,11 @@ func (s *svc) CreateComment(ctx context.Context, arg repo.CreateCommentParams) (
 		return repo.Comment{}, err
 	}
 
-	_, err = qtx.UpdatePostStatus(ctx, arg.PostID)
+	statusArg := repo.UpdatePostStatusParams{
+		PostID: arg.PostID,
+		UserID: arg.UserID,
+	}
+	_, err = qtx.UpdatePostStatus(ctx, statusArg)
 	if err != nil {
 		return repo.Comment{}, ErrPostNotUpdated
 	}
@@ -97,7 +101,11 @@ func (s *svc) UpdateComment(ctx context.Context, arg repo.UpdateCommentParams) (
 		return repo.Comment{}, err
 	}
 
-	_, err = qtx.UpdatePostStatus(ctx, arg.PostID)
+	statusArg := repo.UpdatePostStatusParams{
+		PostID: arg.PostID,
+		UserID: arg.UserID,
+	}
+	_, err = qtx.UpdatePostStatus(ctx, statusArg)
 	if err != nil {
 		return repo.Comment{}, ErrPostNotUpdated
 	}
@@ -107,8 +115,8 @@ func (s *svc) UpdateComment(ctx context.Context, arg repo.UpdateCommentParams) (
 }
 
 // DeleteComment deletes the comment given by the id from the database.
-func (s *svc) DeleteComment(ctx context.Context, id int64) error {
-	delRows, err := s.repo.DeleteComment(ctx, id)
+func (s *svc) DeleteComment(ctx context.Context, arg repo.DeleteCommentParams) error {
+	delRows, err := s.repo.DeleteComment(ctx, arg)
 	if err != nil {
 		return err
 	}

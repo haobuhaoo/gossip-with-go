@@ -51,17 +51,27 @@ const LoginPage: React.FC = () => {
         }
 
         if (isLogin) {
-            axiosInstance.get(`users/${username}`)
-                .then(res => {
+            axiosInstance.post("auth/login", { username })
+                .then(async res => {
                     if (res.data) {
-                        localStorage.setItem("user", res.data.payload?.data?.name);
-                        localStorage.setItem("token", res.data.payload?.data?.user_id);
-                        setAuth({
-                            username: res.data.payload?.data?.name,
-                            userId: res.data.payload?.data?.user_id,
-                            isAuthenticated: true,
-                            isLoading: false,
-                        })
+                        localStorage.setItem("token", res.data.payload?.data?.token);
+
+                        await axiosInstance.get("/api/me")
+                            .then(res => {
+                                if (res.data) {
+                                    setAuth({
+                                        username: res.data.payload?.data?.name,
+                                        userId: res.data.payload?.data?.user_id,
+                                        isAuthenticated: true,
+                                        isLoading: false,
+                                    });
+                                }
+                            })
+                            .catch(err => {
+                                console.error("unable to authenticate user: " + err);
+                                setError(err);
+                            });
+
                         navigate("/home");
                     }
                 })
@@ -105,7 +115,6 @@ const LoginPage: React.FC = () => {
     }, [location.state, error]);
 
     useEffect(() => {
-        localStorage.removeItem("user");
         localStorage.removeItem("token");
     }, []);
 

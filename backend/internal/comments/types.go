@@ -13,7 +13,7 @@ type Service interface {
 	FindCommentsByPost(ctx context.Context, arg repo.FindPostByIDParams) ([]Comment, error)
 	CreateComment(ctx context.Context, arg repo.CreateCommentParams) (repo.Comment, error)
 	UpdateComment(ctx context.Context, arg repo.UpdateCommentParams) (repo.Comment, error)
-	DeleteComment(ctx context.Context, id int64) error
+	DeleteComment(ctx context.Context, arg repo.DeleteCommentParams) error
 }
 
 // Comment model that is passed to the frontend.
@@ -30,7 +30,6 @@ type Comment struct {
 // CreateCommentRequest handles the comment related HTTP request body for creation of a new comment.
 type CreateCommentRequest struct {
 	PostID      int64  `json:"postId" validate:"required,min=1"`
-	UserID      int64  `json:"userId" validate:"required,min=1"`
 	Description string `json:"description" validate:"required"`
 }
 

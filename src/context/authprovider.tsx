@@ -11,16 +11,19 @@ import axiosInstance from "../utils/axiosInstance";
  */
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
     const [auth, setAuth] = useState<User>({
-        username: localStorage.getItem("user") ?? "",
-        userId: localStorage.getItem("token") ?? "",
+        username: "",
+        userId: "",
         isAuthenticated: false,
         isLoading: true,
     })
 
     useEffect(() => {
-        if (!auth.username && !auth.userId) return;
-
-        axiosInstance.get(`/users/${auth.username}`)
+        const token: string | null = localStorage.getItem("token");
+        if (!token) {
+            setAuth({ username: "", userId: "", isAuthenticated: false, isLoading: false });
+            return;
+        }
+        axiosInstance.get("/api/me")
             .then(res => {
                 if (res.data) {
                     setAuth({
@@ -33,11 +36,10 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             })
             .catch(err => {
                 console.error("unable to verify user: " + err);
-                localStorage.removeItem("user");
                 localStorage.removeItem("token");
                 setAuth({ username: "", userId: "", isAuthenticated: false, isLoading: false });
             });
-    }, [auth.username, auth.userId]);
+    }, []);
 
     return (
         <AuthContext.Provider value={{ auth, setAuth }}>

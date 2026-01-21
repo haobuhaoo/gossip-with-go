@@ -23,13 +23,13 @@ func NewService(repo *repo.Queries) Service {
 }
 
 // FindPostsByTopic returns all posts of the given topic id from the database.
-func (s *svc) FindPostsByTopic(ctx context.Context, id int64) ([]Post, error) {
-	_, err := s.repo.FindTopicByID(ctx, id)
+func (s *svc) FindPostsByTopic(ctx context.Context, arg repo.FindPostsByTopicParams) ([]Post, error) {
+	_, err := s.repo.FindTopicByID(ctx, arg.TopicID)
 	if err != nil {
 		return []Post{}, topics.ErrTopicNotFound
 	}
 
-	rows, err := s.repo.FindPostsByTopic(ctx, id)
+	rows, err := s.repo.FindPostsByTopic(ctx, arg)
 	if err != nil {
 		return []Post{}, err
 	}
@@ -88,7 +88,6 @@ func (s *svc) CreatePost(ctx context.Context, arg repo.CreatePostParams) (repo.P
 
 // UpdatePost updates an existing post with the given arg params and returns it.
 func (s *svc) UpdatePost(ctx context.Context, arg repo.UpdatePostParams) (repo.Post, error) {
-	var post repo.Post
 	post, err := s.repo.UpdatePost(ctx, arg)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -105,8 +104,8 @@ func (s *svc) UpdatePost(ctx context.Context, arg repo.UpdatePostParams) (repo.P
 
 // DeletePost deletes the post given by the id from the database.
 // It deletes all comments under that post too.
-func (s *svc) DeletePost(ctx context.Context, id int64) error {
-	delRows, err := s.repo.DeletePost(ctx, id)
+func (s *svc) DeletePost(ctx context.Context, arg repo.DeletePostParams) error {
+	delRows, err := s.repo.DeletePost(ctx, arg)
 	if err != nil {
 		return err
 	}

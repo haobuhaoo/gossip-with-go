@@ -86,7 +86,7 @@ const PostListCard: React.FC<Props> = ({ post, isUser, handleClick, openPostModa
                         overflow: "hidden",
                         whiteSpace: "pre-wrap"
                     }}>
-                    {capitalize(post.title)}
+                    {post.title}
                 </Typography>
 
                 <Divider sx={{ mx: "8px" }} />

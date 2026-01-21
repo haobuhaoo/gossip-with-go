@@ -33,9 +33,9 @@ type Props = {
 
     /**
      * Function that passes the updated `title` and `description` to parent component,
-     * along with its `postId` and `postUserId`.
+     * along with its `postId`.
      */
-    onUpdate: (postId: number, postUserId: number, title: string, description: string) => void;
+    onUpdate: (postId: number, title: string, description: string) => void;
 }
 
 /**
@@ -73,7 +73,7 @@ const PostModal: React.FC<Props> = ({ open, close, post, isUpdate, onCreate, onU
                 setError("system error: post missing");
                 return;
             }
-            onUpdate(post.post_id, post.user_id, newTitle, newDesc);
+            onUpdate(post.post_id, newTitle, newDesc);
             setNewTitle("");
             setNewDesc("");
             setError(" ");

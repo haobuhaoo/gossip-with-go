@@ -11,6 +11,23 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countVote = `-- name: CountVote :one
+SELECT COUNT(*) FILTER (WHERE vote = 1) AS likes, COUNT(*) FILTER (WHERE vote = -1) AS dislikes
+FROM Comment_Votes WHERE comment_id = $1
+`
+
+type CountVoteRow struct {
+	Likes    int64 `json:"likes"`
+	Dislikes int64 `json:"dislikes"`
+}
+
+func (q *Queries) CountVote(ctx context.Context, commentID int64) (CountVoteRow, error) {
+	row := q.db.QueryRow(ctx, countVote, commentID)
+	var i CountVoteRow
+	err := row.Scan(&i.Likes, &i.Dislikes)
+	return i, err
+}
+
 const createComment = `-- name: CreateComment :one
 INSERT INTO Comments (user_id, post_id, description) VALUES ($1, $2, $3) RETURNING comment_id, post_id, user_id, description, created_at, updated_at
 `
@@ -99,11 +116,16 @@ func (q *Queries) CreateUser(ctx context.Context, name string) (User, error) {
 }
 
 const deleteComment = `-- name: DeleteComment :execrows
-DELETE FROM Comments WHERE comment_id = $1
+DELETE FROM Comments WHERE comment_id = $1 AND user_id = $2
 `
 
-func (q *Queries) DeleteComment(ctx context.Context, commentID int64) (int64, error) {
-	result, err := q.db.Exec(ctx, deleteComment, commentID)
+type DeleteCommentParams struct {
+	CommentID int64 `json:"comment_id"`
+	UserID    int64 `json:"user_id"`
+}
+
+func (q *Queries) DeleteComment(ctx context.Context, arg DeleteCommentParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteComment, arg.CommentID, arg.UserID)
 	if err != nil {
 		return 0, err
 	}
@@ -111,11 +133,16 @@ func (q *Queries) DeleteComment(ctx context.Context, commentID int64) (int64, er
 }
 
 const deletePost = `-- name: DeletePost :execrows
-DELETE FROM Posts WHERE post_id = $1
+DELETE FROM Posts WHERE post_id = $1 AND user_id = $2
 `
 
-func (q *Queries) DeletePost(ctx context.Context, postID int64) (int64, error) {
-	result, err := q.db.Exec(ctx, deletePost, postID)
+type DeletePostParams struct {
+	PostID int64 `json:"post_id"`
+	UserID int64 `json:"user_id"`
+}
+
+func (q *Queries) DeletePost(ctx context.Context, arg DeletePostParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deletePost, arg.PostID, arg.UserID)
 	if err != nil {
 		return 0, err
 	}
@@ -123,15 +150,64 @@ func (q *Queries) DeletePost(ctx context.Context, postID int64) (int64, error) {
 }
 
 const deleteTopic = `-- name: DeleteTopic :execrows
-DELETE FROM Topics WHERE topic_id = $1
+DELETE FROM Topics WHERE topic_id = $1 AND user_id = $2
 `
 
-func (q *Queries) DeleteTopic(ctx context.Context, topicID int64) (int64, error) {
-	result, err := q.db.Exec(ctx, deleteTopic, topicID)
+type DeleteTopicParams struct {
+	TopicID int64 `json:"topic_id"`
+	UserID  int64 `json:"user_id"`
+}
+
+func (q *Queries) DeleteTopic(ctx context.Context, arg DeleteTopicParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteTopic, arg.TopicID, arg.UserID)
 	if err != nil {
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const dislikesComment = `-- name: DislikesComment :one
+INSERT INTO Comment_Votes (comment_id, user_id, vote) VALUES ($1, $2, -1)
+ON CONFLICT (comment_id, user_id) DO UPDATE SET vote = -1 WHERE Comment_Votes.vote <> -1 RETURNING comment_id, user_id, vote, created_at
+`
+
+type DislikesCommentParams struct {
+	CommentID int64 `json:"comment_id"`
+	UserID    int64 `json:"user_id"`
+}
+
+func (q *Queries) DislikesComment(ctx context.Context, arg DislikesCommentParams) (CommentVote, error) {
+	row := q.db.QueryRow(ctx, dislikesComment, arg.CommentID, arg.UserID)
+	var i CommentVote
+	err := row.Scan(
+		&i.CommentID,
+		&i.UserID,
+		&i.Vote,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const dislikesPost = `-- name: DislikesPost :one
+INSERT INTO Post_Votes (post_id, user_id, vote) VALUES ($1, $2, -1)
+ON CONFLICT (post_id, user_id) DO UPDATE SET vote = -1 WHERE Post_Votes.vote <> -1 RETURNING post_id, user_id, vote, created_at
+`
+
+type DislikesPostParams struct {
+	PostID int64 `json:"post_id"`
+	UserID int64 `json:"user_id"`
+}
+
+func (q *Queries) DislikesPost(ctx context.Context, arg DislikesPostParams) (PostVote, error) {
+	row := q.db.QueryRow(ctx, dislikesPost, arg.PostID, arg.UserID)
+	var i PostVote
+	err := row.Scan(
+		&i.PostID,
+		&i.UserID,
+		&i.Vote,
+		&i.CreatedAt,
+	)
+	return i, err
 }
 
 const findCommentsByPost = `-- name: FindCommentsByPost :many
@@ -179,13 +255,22 @@ func (q *Queries) FindCommentsByPost(ctx context.Context, postID int64) ([]FindC
 }
 
 const findPostByID = `-- name: FindPostByID :one
-SELECT p.post_id, p.topic_id, p.user_id, u.name AS username, p.title, p.description, p.created_at, p.updated_at
-FROM Posts p JOIN Users u ON u.user_id = p.user_id WHERE post_id = $1 AND topic_id = $2
+SELECT DISTINCT p.post_id, p.topic_id, p.user_id, u.name AS username,
+p.title, p.description, p.created_at, p.updated_at,
+COUNT(v.vote) FILTER (WHERE v.vote = 1) OVER (PARTITION BY p.post_id) AS likes,
+COUNT(v.vote) FILTER (WHERE v.vote = -1) OVER (PARTITION BY p.post_id) AS dislikes,
+MAX(uv.vote) OVER (PARTITION BY p.post_id) AS user_vote
+FROM Posts p
+JOIN Users u ON u.user_id = p.user_id
+LEFT JOIN Post_Votes v ON p.post_id = v.post_id
+LEFT JOIN Post_Votes uv ON p.post_id = uv.post_id AND uv.user_id = $3
+WHERE p.post_id = $1 AND p.topic_id = $2
 `
 
 type FindPostByIDParams struct {
 	PostID  int64 `json:"post_id"`
 	TopicID int64 `json:"topic_id"`
+	UserID  int64 `json:"user_id"`
 }
 
 type FindPostByIDRow struct {
@@ -197,10 +282,13 @@ type FindPostByIDRow struct {
 	Description string             `json:"description"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	Likes       int64              `json:"likes"`
+	Dislikes    int64              `json:"dislikes"`
+	UserVote    interface{}        `json:"user_vote"`
 }
 
 func (q *Queries) FindPostByID(ctx context.Context, arg FindPostByIDParams) (FindPostByIDRow, error) {
-	row := q.db.QueryRow(ctx, findPostByID, arg.PostID, arg.TopicID)
+	row := q.db.QueryRow(ctx, findPostByID, arg.PostID, arg.TopicID, arg.UserID)
 	var i FindPostByIDRow
 	err := row.Scan(
 		&i.PostID,
@@ -211,14 +299,31 @@ func (q *Queries) FindPostByID(ctx context.Context, arg FindPostByIDParams) (Fin
 		&i.Description,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Likes,
+		&i.Dislikes,
+		&i.UserVote,
 	)
 	return i, err
 }
 
 const findPostsByTopic = `-- name: FindPostsByTopic :many
-SELECT p.post_id, p.topic_id, p.user_id, u.name AS username, p.title, p.description, p.created_at, p.updated_at
-FROM Posts p JOIN Users u ON u.user_id = p.user_id WHERE p.topic_id = $1 ORDER BY p.updated_at DESC
+SELECT DISTINCT p.post_id, p.topic_id, p.user_id, u.name AS username,
+p.title, p.description, p.created_at, p.updated_at,
+COUNT(v.vote) FILTER (WHERE v.vote = 1) OVER (PARTITION BY p.post_id) AS likes,
+COUNT(v.vote) FILTER (WHERE v.vote = -1) OVER (PARTITION BY p.post_id) AS dislikes,
+MAX(uv.vote) OVER (PARTITION BY p.post_id) AS user_vote
+FROM Posts p
+JOIN Users u ON u.user_id = p.user_id
+LEFT JOIN Post_Votes v ON p.post_id = v.post_id
+LEFT JOIN Post_Votes uv ON p.post_id = uv.post_id AND uv.user_id = $2
+WHERE p.topic_id = $1
+ORDER BY likes DESC, p.updated_at DESC
 `
+
+type FindPostsByTopicParams struct {
+	TopicID int64 `json:"topic_id"`
+	UserID  int64 `json:"user_id"`
+}
 
 type FindPostsByTopicRow struct {
 	PostID      int64              `json:"post_id"`
@@ -229,11 +334,14 @@ type FindPostsByTopicRow struct {
 	Description string             `json:"description"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	Likes       int64              `json:"likes"`
+	Dislikes    int64              `json:"dislikes"`
+	UserVote    interface{}        `json:"user_vote"`
 }
 
 // Posts Queries
-func (q *Queries) FindPostsByTopic(ctx context.Context, topicID int64) ([]FindPostsByTopicRow, error) {
-	rows, err := q.db.Query(ctx, findPostsByTopic, topicID)
+func (q *Queries) FindPostsByTopic(ctx context.Context, arg FindPostsByTopicParams) ([]FindPostsByTopicRow, error) {
+	rows, err := q.db.Query(ctx, findPostsByTopic, arg.TopicID, arg.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -250,6 +358,9 @@ func (q *Queries) FindPostsByTopic(ctx context.Context, topicID int64) ([]FindPo
 			&i.Description,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Likes,
+			&i.Dislikes,
+			&i.UserVote,
 		); err != nil {
 			return nil, err
 		}
@@ -277,6 +388,17 @@ func (q *Queries) FindTopicByID(ctx context.Context, topicID int64) (Topic, erro
 	return i, err
 }
 
+const findUserByID = `-- name: FindUserByID :one
+SELECT user_id, name FROM Users WHERE user_id = $1
+`
+
+func (q *Queries) FindUserByID(ctx context.Context, userID int64) (User, error) {
+	row := q.db.QueryRow(ctx, findUserByID, userID)
+	var i User
+	err := row.Scan(&i.UserID, &i.Name)
+	return i, err
+}
+
 const findUserByName = `-- name: FindUserByName :one
 SELECT user_id, name FROM Users WHERE name = $1
 `
@@ -286,6 +408,52 @@ func (q *Queries) FindUserByName(ctx context.Context, name string) (User, error)
 	row := q.db.QueryRow(ctx, findUserByName, name)
 	var i User
 	err := row.Scan(&i.UserID, &i.Name)
+	return i, err
+}
+
+const likesComment = `-- name: LikesComment :one
+INSERT INTO Comment_Votes (comment_id, user_id, vote) VALUES ($1, $2, 1)
+ON CONFLICT (comment_id, user_id) DO UPDATE SET vote = 1 WHERE Comment_Votes.vote <> 1 RETURNING comment_id, user_id, vote, created_at
+`
+
+type LikesCommentParams struct {
+	CommentID int64 `json:"comment_id"`
+	UserID    int64 `json:"user_id"`
+}
+
+// Comment Votes
+func (q *Queries) LikesComment(ctx context.Context, arg LikesCommentParams) (CommentVote, error) {
+	row := q.db.QueryRow(ctx, likesComment, arg.CommentID, arg.UserID)
+	var i CommentVote
+	err := row.Scan(
+		&i.CommentID,
+		&i.UserID,
+		&i.Vote,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const likesPost = `-- name: LikesPost :one
+INSERT INTO Post_Votes (post_id, user_id, vote) VALUES ($1, $2, 1)
+ON CONFLICT (post_id, user_id) DO UPDATE SET vote = 1 WHERE Post_Votes.vote <> 1 RETURNING post_id, user_id, vote, created_at
+`
+
+type LikesPostParams struct {
+	PostID int64 `json:"post_id"`
+	UserID int64 `json:"user_id"`
+}
+
+// Post Votes
+func (q *Queries) LikesPost(ctx context.Context, arg LikesPostParams) (PostVote, error) {
+	row := q.db.QueryRow(ctx, likesPost, arg.PostID, arg.UserID)
+	var i PostVote
+	err := row.Scan(
+		&i.PostID,
+		&i.UserID,
+		&i.Vote,
+		&i.CreatedAt,
+	)
 	return i, err
 }
 
@@ -319,15 +487,58 @@ func (q *Queries) ListTopics(ctx context.Context) ([]Topic, error) {
 	return items, nil
 }
 
+const removeCommentVote = `-- name: RemoveCommentVote :execrows
+DELETE FROM Comment_Votes WHERE comment_id = $1 AND user_id = $2
+`
+
+type RemoveCommentVoteParams struct {
+	CommentID int64 `json:"comment_id"`
+	UserID    int64 `json:"user_id"`
+}
+
+func (q *Queries) RemoveCommentVote(ctx context.Context, arg RemoveCommentVoteParams) (int64, error) {
+	result, err := q.db.Exec(ctx, removeCommentVote, arg.CommentID, arg.UserID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const removePostVote = `-- name: RemovePostVote :execrows
+DELETE FROM Post_Votes WHERE post_id = $1 AND user_id = $2
+`
+
+type RemovePostVoteParams struct {
+	PostID int64 `json:"post_id"`
+	UserID int64 `json:"user_id"`
+}
+
+func (q *Queries) RemovePostVote(ctx context.Context, arg RemovePostVoteParams) (int64, error) {
+	result, err := q.db.Exec(ctx, removePostVote, arg.PostID, arg.UserID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const searchPost = `-- name: SearchPost :many
-SELECT p.post_id, p.topic_id, p.user_id, u.name AS username, p.title, p.description, p.created_at, p.updated_at
-FROM Posts p JOIN Users u ON u.user_id = p.user_id WHERE p.topic_id = $1 AND
-(p.title ILIKE '%' || $2 ||'%' OR p.description ILIKE '%' || $2 ||'%') ORDER BY p.updated_at DESC
+SELECT DISTINCT p.post_id, p.topic_id, p.user_id, u.name AS username,
+p.title, p.description, p.created_at, p.updated_at,
+COUNT(v.vote) FILTER (WHERE v.vote = 1) OVER (PARTITION BY p.post_id)AS likes,
+COUNT(v.vote) FILTER (WHERE v.vote = -1) OVER (PARTITION BY p.post_id)AS dislikes,
+MAX(uv.vote) OVER (PARTITION BY p.post_id)AS user_vote
+FROM Posts p
+JOIN Users u ON u.user_id = p.user_id
+LEFT JOIN Post_Votes v ON p.post_id = v.post_id
+LEFT JOIN Post_Votes uv ON p.post_id = uv.post_id AND uv.user_id = $3
+WHERE p.topic_id = $1 AND (p.title ILIKE '%' || $2 ||'%' OR p.description ILIKE '%' || $2 ||'%')
+ORDER BY likes DESC, p.updated_at DESC
 `
 
 type SearchPostParams struct {
 	TopicID int64       `json:"topic_id"`
 	Column2 pgtype.Text `json:"column_2"`
+	UserID  int64       `json:"user_id"`
 }
 
 type SearchPostRow struct {
@@ -339,10 +550,13 @@ type SearchPostRow struct {
 	Description string             `json:"description"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	Likes       int64              `json:"likes"`
+	Dislikes    int64              `json:"dislikes"`
+	UserVote    interface{}        `json:"user_vote"`
 }
 
 func (q *Queries) SearchPost(ctx context.Context, arg SearchPostParams) ([]SearchPostRow, error) {
-	rows, err := q.db.Query(ctx, searchPost, arg.TopicID, arg.Column2)
+	rows, err := q.db.Query(ctx, searchPost, arg.TopicID, arg.Column2, arg.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -359,6 +573,9 @@ func (q *Queries) SearchPost(ctx context.Context, arg SearchPostParams) ([]Searc
 			&i.Description,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Likes,
+			&i.Dislikes,
+			&i.UserVote,
 		); err != nil {
 			return nil, err
 		}
@@ -400,17 +617,24 @@ func (q *Queries) SearchTopic(ctx context.Context, dollar_1 pgtype.Text) ([]Topi
 }
 
 const updateComment = `-- name: UpdateComment :one
-UPDATE Comments SET description = $3, updated_at = now() WHERE comment_id = $1 AND post_id = $2 RETURNING comment_id, post_id, user_id, description, created_at, updated_at
+UPDATE Comments SET description = $4, updated_at = now()
+WHERE comment_id = $1 AND post_id = $2 AND user_id = $3 RETURNING comment_id, post_id, user_id, description, created_at, updated_at
 `
 
 type UpdateCommentParams struct {
 	CommentID   int64  `json:"comment_id"`
 	PostID      int64  `json:"post_id"`
+	UserID      int64  `json:"user_id"`
 	Description string `json:"description"`
 }
 
 func (q *Queries) UpdateComment(ctx context.Context, arg UpdateCommentParams) (Comment, error) {
-	row := q.db.QueryRow(ctx, updateComment, arg.CommentID, arg.PostID, arg.Description)
+	row := q.db.QueryRow(ctx, updateComment,
+		arg.CommentID,
+		arg.PostID,
+		arg.UserID,
+		arg.Description,
+	)
 	var i Comment
 	err := row.Scan(
 		&i.CommentID,
@@ -424,17 +648,23 @@ func (q *Queries) UpdateComment(ctx context.Context, arg UpdateCommentParams) (C
 }
 
 const updatePost = `-- name: UpdatePost :one
-UPDATE Posts SET title = $2, description = $3, updated_at = now() WHERE post_id = $1 RETURNING post_id, topic_id, user_id, title, description, created_at, updated_at
+UPDATE Posts SET title = $3, description = $4, updated_at = now() WHERE post_id = $1 AND user_id = $2 RETURNING post_id, topic_id, user_id, title, description, created_at, updated_at
 `
 
 type UpdatePostParams struct {
 	PostID      int64  `json:"post_id"`
+	UserID      int64  `json:"user_id"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
 }
 
 func (q *Queries) UpdatePost(ctx context.Context, arg UpdatePostParams) (Post, error) {
-	row := q.db.QueryRow(ctx, updatePost, arg.PostID, arg.Title, arg.Description)
+	row := q.db.QueryRow(ctx, updatePost,
+		arg.PostID,
+		arg.UserID,
+		arg.Title,
+		arg.Description,
+	)
 	var i Post
 	err := row.Scan(
 		&i.PostID,
@@ -449,11 +679,16 @@ func (q *Queries) UpdatePost(ctx context.Context, arg UpdatePostParams) (Post, e
 }
 
 const updatePostStatus = `-- name: UpdatePostStatus :one
-UPDATE Posts SET updated_at = now() WHERE post_id = $1 RETURNING post_id, topic_id, user_id, title, description, created_at, updated_at
+UPDATE Posts SET updated_at = now() WHERE post_id = $1 AND user_id = $2 RETURNING post_id, topic_id, user_id, title, description, created_at, updated_at
 `
 
-func (q *Queries) UpdatePostStatus(ctx context.Context, postID int64) (Post, error) {
-	row := q.db.QueryRow(ctx, updatePostStatus, postID)
+type UpdatePostStatusParams struct {
+	PostID int64 `json:"post_id"`
+	UserID int64 `json:"user_id"`
+}
+
+func (q *Queries) UpdatePostStatus(ctx context.Context, arg UpdatePostStatusParams) (Post, error) {
+	row := q.db.QueryRow(ctx, updatePostStatus, arg.PostID, arg.UserID)
 	var i Post
 	err := row.Scan(
 		&i.PostID,
@@ -468,16 +703,17 @@ func (q *Queries) UpdatePostStatus(ctx context.Context, postID int64) (Post, err
 }
 
 const updateTopic = `-- name: UpdateTopic :one
-UPDATE Topics SET title = $2 WHERE topic_id = $1 RETURNING topic_id, user_id, title, created_at
+UPDATE Topics SET title = $3 WHERE topic_id = $1 AND user_id = $2 RETURNING topic_id, user_id, title, created_at
 `
 
 type UpdateTopicParams struct {
 	TopicID int64  `json:"topic_id"`
+	UserID  int64  `json:"user_id"`
 	Title   string `json:"title"`
 }
 
 func (q *Queries) UpdateTopic(ctx context.Context, arg UpdateTopicParams) (Topic, error) {
-	row := q.db.QueryRow(ctx, updateTopic, arg.TopicID, arg.Title)
+	row := q.db.QueryRow(ctx, updateTopic, arg.TopicID, arg.UserID, arg.Title)
 	var i Topic
 	err := row.Scan(
 		&i.TopicID,

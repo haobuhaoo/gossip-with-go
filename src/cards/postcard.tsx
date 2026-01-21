@@ -5,6 +5,8 @@ import {
 
 import type { Comment, Post } from "../types/entity";
 
+import { useAuth } from "../context/authcontext";
+
 import AvatarIcon from "../components/avataricon";
 import DisplayAuthor from "../components/displayauthor";
 import EditButton from "../components/editbutton";
@@ -35,10 +37,9 @@ type Props = {
 
     /**
      * Function that passes the updated `description` to parent component, along with its
-     * `commentId`, `commentPostId` and `commentUserId`.
+     * `commentId` and `commentPostId`.
      */
-    onUpdate: (
-        commentId: number, commentPostId: number, commentUserId: number, description: string) => void;
+    onUpdate: (commentId: number, commentPostId: number, description: string) => void;
 
     /**
      * Function that passes comment to be deleted to parent component.
@@ -51,8 +52,8 @@ type Props = {
  */
 const PostCard: React.FC<Props> = ({
     post, commentList, openPostModal, onCreate, onUpdate, onDelete }) => {
-    const userId: string = localStorage.getItem("token") ?? "";
     const [comment, setComment] = useState<string>("");
+    const { auth } = useAuth();
 
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setComment(event.target.value);
@@ -81,7 +82,7 @@ const PostCard: React.FC<Props> = ({
                     <AvatarIcon username={post.username} />
                     <DisplayAuthor entity={post} />
 
-                    {userId == post.user_id.toString() &&
+                    {auth.userId == post.user_id.toString() &&
                         <Box
                             sx={{
                                 display: "flex",
@@ -124,6 +125,7 @@ const PostCard: React.FC<Props> = ({
                         multiline
                         rows={2}
                         onChange={handleChange}
+                        required
                         fullWidth
                         sx={{ "& .MuiOutlinedInput-root": { borderRadius: 10, pl: 4 } }}
                         slotProps={{
@@ -144,7 +146,7 @@ const PostCard: React.FC<Props> = ({
                         <CommentListCard
                             key={c.comment_id}
                             comment={c}
-                            isUser={userId == c.user_id.toString()}
+                            isUser={auth.userId == c.user_id.toString()}
                             onUpdate={onUpdate}
                             onDelete={onDelete}
                         />

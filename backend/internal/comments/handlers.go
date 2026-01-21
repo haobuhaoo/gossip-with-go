@@ -15,6 +15,7 @@ import (
 const (
 	InvalidCommentIdMessage            = "Invalid comment id"
 	InvalidRequestBodyMessage          = "Required fields missing"
+	MissingUserIDMessage               = "Missing userID"
 	SuccessfulFindCommentByPostMessage = "Successfully listed all comments"
 	SuccessfulCreateCommentMessage     = "Successfully created comment"
 	SuccessfulUpdateCommentMessage     = "Successfully updated comment"
@@ -35,7 +36,7 @@ func NewHandler(service Service) *handler {
 	}
 }
 
-// FindCommentsByPost handles GET /comments/all//{topicId}/{postId} requests.
+// FindCommentsByPost handles GET /api/comments/all//{topicId}/{postId} requests.
 // It parses the postId string, and passes it to the comment service to return all comments for that post,
 // and serializes the result into a JSON HTTP response.
 func (h *handler) FindCommentsByPost(w http.ResponseWriter, r *http.Request) {
@@ -78,7 +79,7 @@ func (h *handler) FindCommentsByPost(w http.ResponseWriter, r *http.Request) {
 	helper.Write(w, response)
 }
 
-// CreateComment handles POST /comments requests.
+// CreateComment handles POST /api/comments requests.
 // It reads and validates the request body, and passes it to the comment service to create the new
 // comment with a description. It then serializes the result into a JSON HTTP response.
 func (h *handler) CreateComment(w http.ResponseWriter, r *http.Request) {
@@ -95,9 +96,15 @@ func (h *handler) CreateComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userId, ok := r.Context().Value("userID").(int64)
+	if !ok {
+		helper.WriteError(w, MissingUserIDMessage, http.StatusBadRequest)
+		return
+	}
+
 	newComment := repo.CreateCommentParams{
 		PostID:      req.PostID,
-		UserID:      req.UserID,
+		UserID:      userId,
 		Description: req.Description,
 	}
 	comment, err := h.service.CreateComment(r.Context(), newComment)
@@ -116,7 +123,7 @@ func (h *handler) CreateComment(w http.ResponseWriter, r *http.Request) {
 	helper.Write(w, response)
 }
 
-// UpdateComment handles PUT /comments/{id} requests.
+// UpdateComment handles PUT /api/comments/{id} requests.
 // It parses the id string, reads and validates the request body, and passes it to the comment
 // service to update the existing comment with the new description. It then serializes the result
 // into a JSON HTTP response.
@@ -141,9 +148,16 @@ func (h *handler) UpdateComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userId, ok := r.Context().Value("userID").(int64)
+	if !ok {
+		helper.WriteError(w, MissingUserIDMessage, http.StatusBadRequest)
+		return
+	}
+
 	newComment := repo.UpdateCommentParams{
 		CommentID:   id,
 		PostID:      req.PostID,
+		UserID:      userId,
 		Description: req.Description,
 	}
 	comment, err := h.service.UpdateComment(r.Context(), newComment)
@@ -167,7 +181,7 @@ func (h *handler) UpdateComment(w http.ResponseWriter, r *http.Request) {
 	helper.Write(w, response)
 }
 
-// DeleteComment handles DELETE /comments/{id} requests.
+// DeleteComment handles DELETE /api/comments/{id} requests.
 // It parses the id string, and passes it to the comment service to delete the specified comment,
 // which then serializes the result into a JSON HTTP response.
 func (h *handler) DeleteComment(w http.ResponseWriter, r *http.Request) {
@@ -178,7 +192,17 @@ func (h *handler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.service.DeleteComment(r.Context(), id)
+	userId, ok := r.Context().Value("userID").(int64)
+	if !ok {
+		helper.WriteError(w, MissingUserIDMessage, http.StatusBadRequest)
+		return
+	}
+
+	arg := repo.DeleteCommentParams{
+		CommentID: id,
+		UserID:    userId,
+	}
+	err = h.service.DeleteComment(r.Context(), arg)
 	if err != nil {
 		if err == ErrCommentNotFound {
 			helper.WriteError(w, ErrCommentNotFound.Error(), http.StatusNotFound)

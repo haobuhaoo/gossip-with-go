@@ -4,6 +4,8 @@ import { Alert, capitalize, Snackbar, Typography } from "@mui/material";
 
 import type { Post, Topic } from "../types/entity";
 
+import { useAuth } from "../context/authcontext";
+
 import EmptyList from "../cards/emptylist";
 import PostListCard from "../cards/postlistcard";
 import AddButton from "../components/addbutton";
@@ -20,7 +22,6 @@ import { truncate } from "../utils/formatters";
  * post and a `DELETE` request to delete a selected post.
  */
 const TopicPage: React.FC = () => {
-    const userId: string = localStorage.getItem("token") ?? "";
     const topicId: string = useParams().topicId ?? "";
     const [topic, setTopic] = useState<Topic>();
     const [post, setPost] = useState<Post | null>(null);
@@ -30,10 +31,11 @@ const TopicPage: React.FC = () => {
     const [openModal, setOpenModal] = useState<boolean>(false);
     const [isUpdate, setIsUpdate] = useState<boolean>(false);
     const [openSnackBar, setOpenSnackBar] = useState<boolean>(false);
+    const { auth } = useAuth();
     const navigate = useNavigate();
 
     const getTopic = (id: string) => {
-        axiosInstance.get(`/topics/${id}`)
+        axiosInstance.get(`/api/topics/${id}`)
             .then(res => {
                 if (res.data) {
                     setIsError(false);
@@ -49,7 +51,7 @@ const TopicPage: React.FC = () => {
     };
 
     const getAllPosts = (id: string) => {
-        axiosInstance.get(`/posts/all/${id}`)
+        axiosInstance.get(`/api/posts/all/${id}`)
             .then(res => {
                 if (res.data) {
                     setIsError(false);
@@ -93,16 +95,8 @@ const TopicPage: React.FC = () => {
         setMessage("");
         setIsError(false);
 
-        if (userId == "") {
-            setIsError(true);
-            setMessage("system error: userId misssing");
-            setOpenSnackBar(true);
-            return;
-        }
-
-        axiosInstance.post("/posts", {
+        axiosInstance.post("/api/posts", {
             topicId: Number(topicId),
-            userId: Number.parseInt(userId, 10),
             title,
             description
         })
@@ -128,26 +122,12 @@ const TopicPage: React.FC = () => {
      * Updates the selected post. Only the author is able to update the post.
      */
     const onUpdate = (
-        postId: number, postUserId: number, title: string, description: string) => {
+        postId: number, title: string, description: string) => {
         setOpenSnackBar(false);
         setMessage("");
         setIsError(false);
 
-        if (userId == "") {
-            setIsError(true);
-            setMessage("system error: userId misssing");
-            setOpenSnackBar(true);
-            return;
-        }
-
-        if (userId != postUserId.toString()) {
-            setIsError(true);
-            setMessage("Not author. Unable to update.");
-            setOpenSnackBar(true);
-            return;
-        }
-
-        axiosInstance.put(`/posts/${postId}`, { title, description })
+        axiosInstance.put(`/api/posts/${postId}`, { title, description })
             .then(res => {
                 if (res.data) {
                     setMessage("Updated " + capitalize(title));
@@ -174,21 +154,7 @@ const TopicPage: React.FC = () => {
         setMessage("");
         setIsError(false);
 
-        if (userId == "") {
-            setIsError(true);
-            setMessage("system error: userId misssing");
-            setOpenSnackBar(true);
-            return;
-        }
-
-        if (userId != p.user_id.toString()) {
-            setIsError(true);
-            setMessage("Not author. Unable to delete.");
-            setOpenSnackBar(true);
-            return;
-        }
-
-        axiosInstance.delete(`/posts/${p.post_id}`)
+        axiosInstance.delete(`/api/posts/${p.post_id}`)
             .then(res => {
                 if (res.data) {
                     setIsError(false);
@@ -250,7 +216,7 @@ const TopicPage: React.FC = () => {
                     <PostListCard
                         key={p.post_id}
                         post={p}
-                        isUser={userId == p.user_id.toString()}
+                        isUser={auth.userId == p.user_id.toString()}
                         handleClick={handleClick}
                         openPostModal={openPostModal}
                         onDelete={onDelete}

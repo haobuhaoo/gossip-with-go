@@ -31,7 +31,11 @@ func (s *svc) FindCommentsByPost(ctx context.Context, arg repo.FindPostByIDParam
 		return []Comment{}, posts.ErrPostNotFound
 	}
 
-	rows, err := s.repo.FindCommentsByPost(ctx, arg.PostID)
+	commentArg := repo.FindCommentsByPostParams{
+		PostID: arg.PostID,
+		UserID: arg.UserID,
+	}
+	rows, err := s.repo.FindCommentsByPost(ctx, commentArg)
 	if err != nil {
 		return []Comment{}, err
 	}
@@ -44,6 +48,9 @@ func (s *svc) FindCommentsByPost(ctx context.Context, arg repo.FindPostByIDParam
 			UserID:      row.UserID,
 			Username:    row.Username,
 			Description: row.Description,
+			Likes:       row.Likes,
+			Dislikes:    row.Dislikes,
+			UserVote:    row.UserVote,
 			CreatedAt:   row.CreatedAt.Time,
 			UpdatedAt:   row.UpdatedAt.Time,
 		})
@@ -68,7 +75,11 @@ func (s *svc) CreateComment(ctx context.Context, arg repo.CreateCommentParams) (
 		return repo.Comment{}, err
 	}
 
-	_, err = qtx.UpdatePostStatus(ctx, arg.PostID)
+	statusArg := repo.UpdatePostStatusParams{
+		PostID: arg.PostID,
+		UserID: arg.UserID,
+	}
+	_, err = qtx.UpdatePostStatus(ctx, statusArg)
 	if err != nil {
 		return repo.Comment{}, ErrPostNotUpdated
 	}
@@ -97,7 +108,11 @@ func (s *svc) UpdateComment(ctx context.Context, arg repo.UpdateCommentParams) (
 		return repo.Comment{}, err
 	}
 
-	_, err = qtx.UpdatePostStatus(ctx, arg.PostID)
+	statusArg := repo.UpdatePostStatusParams{
+		PostID: arg.PostID,
+		UserID: arg.UserID,
+	}
+	_, err = qtx.UpdatePostStatus(ctx, statusArg)
 	if err != nil {
 		return repo.Comment{}, ErrPostNotUpdated
 	}
@@ -107,14 +122,48 @@ func (s *svc) UpdateComment(ctx context.Context, arg repo.UpdateCommentParams) (
 }
 
 // DeleteComment deletes the comment given by the id from the database.
-func (s *svc) DeleteComment(ctx context.Context, id int64) error {
-	delRows, err := s.repo.DeleteComment(ctx, id)
+func (s *svc) DeleteComment(ctx context.Context, arg repo.DeleteCommentParams) error {
+	delRows, err := s.repo.DeleteComment(ctx, arg)
 	if err != nil {
 		return err
 	}
 
 	if delRows == 0 {
 		return ErrCommentNotFound
+	}
+
+	return nil
+}
+
+// LikesComment increments the like count for the specific comment by 1.
+func (s *svc) LikesComment(ctx context.Context, arg repo.LikesCommentParams) (repo.CommentVote, error) {
+	comment, err := s.repo.LikesComment(ctx, arg)
+	if err != nil {
+		return repo.CommentVote{}, err
+	}
+
+	return comment, nil
+}
+
+// DislikesComment increments the dislike count for the specific comment by 1.
+func (s *svc) DislikesComment(ctx context.Context, arg repo.DislikesCommentParams) (repo.CommentVote, error) {
+	comment, err := s.repo.DislikesComment(ctx, arg)
+	if err != nil {
+		return repo.CommentVote{}, err
+	}
+
+	return comment, nil
+}
+
+// RemoveCommentVote removes the user's vote for that specific comment.
+func (s *svc) RemoveCommentVote(ctx context.Context, arg repo.RemoveCommentVoteParams) error {
+	delRows, err := s.repo.RemoveCommentVote(ctx, arg)
+	if err != nil {
+		return err
+	}
+
+	if delRows == 0 {
+		return ErrVoteNotFound
 	}
 
 	return nil

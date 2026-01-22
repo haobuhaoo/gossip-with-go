@@ -63,7 +63,7 @@ const SearchBar = <T extends Entity,>({
         setMessage("");
 
         if (isTopic) {
-            axiosInstance.get("/topics/")
+            axiosInstance.get("/api/topics/")
                 .then(res => {
                     if (res.data) {
                         setEntity(res.data.payload?.data);
@@ -90,7 +90,7 @@ const SearchBar = <T extends Entity,>({
             return;
         }
 
-        axiosInstance.get(`/posts/all/${topicId}`)
+        axiosInstance.get(`/api/posts/all/${topicId}`)
             .then(res => {
                 if (res.data) {
                     setEntity(res.data.payload?.data);
@@ -119,7 +119,7 @@ const SearchBar = <T extends Entity,>({
         setMessage("");
 
         if (isTopic) {
-            axiosInstance.get(`/topics/search?q=${query}`)
+            axiosInstance.get(`/api/topics/search?q=${query}`)
                 .then(res => {
                     if (res.data) {
                         setEntity(res.data.payload?.data);
@@ -146,7 +146,7 @@ const SearchBar = <T extends Entity,>({
             return;
         }
 
-        axiosInstance.get(`/posts/${topicId}/search?q=${query}`)
+        axiosInstance.get(`/api/posts/${topicId}/search?q=${query}`)
             .then(res => {
                 if (res.data) {
                     setEntity(res.data.payload?.data);

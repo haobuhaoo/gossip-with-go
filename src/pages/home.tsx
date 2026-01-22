@@ -22,7 +22,6 @@ import { truncate } from "../utils/formatters";
  * request to delete a selected topic.
  */
 const HomePage: React.FC = () => {
-    const userId: string = localStorage.getItem("token") ?? "";
     const [topic, setTopic] = useState<Topic | null>(null);
     const [topiclist, setTopiclist] = useState<Topic[]>([]);
     const [isError, setIsError] = useState<boolean>(false);
@@ -30,11 +29,11 @@ const HomePage: React.FC = () => {
     const [openModal, setOpenModal] = useState<boolean>(false);
     const [isUpdate, setIsUpdate] = useState<boolean>(false);
     const [openSnackBar, setOpenSnackBar] = useState<boolean>(false);
-    const { setAuth } = useAuth();
+    const { auth, setAuth } = useAuth();
     const navigate = useNavigate();
 
     const getAllTopics = () => {
-        axiosInstance.get("/topics")
+        axiosInstance.get("/api/topics")
             .then(res => {
                 if (res.data) {
                     setIsError(false);
@@ -83,16 +82,7 @@ const HomePage: React.FC = () => {
         setMessage("");
         setIsError(false);
 
-        if (userId == "") {
-            setIsError(true);
-            setMessage("system error: userId misssing");
-            setOpenSnackBar(true);
-            return;
-        }
-
-        axiosInstance.post("/topics", {
-            userId: Number.parseInt(userId, 10), title: title.toLocaleLowerCase()
-        })
+        axiosInstance.post("/api/topics", { title: title.toLocaleLowerCase() })
             .then(res => {
                 if (res.data) {
                     setMessage("Created " + capitalize(title));
@@ -115,26 +105,12 @@ const HomePage: React.FC = () => {
      * Updates the selected topic. The title is converted and stored in all lowercase in the datebase.
      * Only the author is able to update the topic.
      */
-    const onUpdate = (topicId: number, topicUserId: number, title: string) => {
+    const onUpdate = (topicId: number, title: string) => {
         setOpenSnackBar(false);
         setMessage("");
         setIsError(false);
 
-        if (userId == "") {
-            setIsError(true);
-            setMessage("system error: userId misssing");
-            setOpenSnackBar(true);
-            return;
-        }
-
-        if (userId != topicUserId.toString()) {
-            setIsError(true);
-            setMessage("Not creator. Unable to update.");
-            setOpenSnackBar(true);
-            return;
-        }
-
-        axiosInstance.put(`/topics/${topicId}`, { title: title.toLocaleLowerCase() })
+        axiosInstance.put(`/api/topics/${topicId}`, { title: title.toLocaleLowerCase() })
             .then(res => {
                 if (res.data) {
                     setMessage("Updated " + capitalize(title));
@@ -161,21 +137,7 @@ const HomePage: React.FC = () => {
         setMessage("");
         setIsError(false);
 
-        if (userId == "") {
-            setIsError(true);
-            setMessage("system error: userId misssing");
-            setOpenSnackBar(true);
-            return;
-        }
-
-        if (userId != t.user_id.toString()) {
-            setIsError(true);
-            setMessage("Not creator. Unable to delete.");
-            setOpenSnackBar(true);
-            return;
-        }
-
-        axiosInstance.delete(`/topics/${t.topic_id}`)
+        axiosInstance.delete(`/api/topics/${t.topic_id}`)
             .then(res => {
                 if (res.data) {
                     setIsError(false);
@@ -230,7 +192,7 @@ const HomePage: React.FC = () => {
                     <TopicListCard
                         key={t.topic_id}
                         topic={t}
-                        isUser={userId == t.user_id.toString()}
+                        isUser={auth.userId == t.user_id.toString()}
                         handleClick={handleClick}
                         openTopicModal={openTopicModal}
                         onDelete={onDelete}

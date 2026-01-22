@@ -21,9 +21,9 @@ type Props = {
 
     /**
      * Function that passes the updated `description` to parent component, along with its
-     * `commentId`, `commentPostId` and `commentUserId`.
+     * `commentId` and `commentPostId``.
      */
-    onUpdate: (commentId: number, commentPostId: number, commentUserId: number, description: string) => void;
+    onUpdate: (commentId: number, commentPostId: number, description: string) => void;
 
     /**
      * Function that passes comment to be deleted to parent component.
@@ -49,7 +49,7 @@ const CommentListCard: React.FC<Props> = ({ comment, isUser, onUpdate, onDelete 
 
     const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
         event.stopPropagation();
-        onUpdate(comment.comment_id, comment.post_id, comment.user_id, desc);
+        onUpdate(comment.comment_id, comment.post_id, desc);
         setIsUpdate(false);
     };
 

@@ -3,16 +3,19 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/haobuhaoo/gossip-with-go/internal/auth"
 	"github.com/haobuhaoo/gossip-with-go/internal/comments"
 	repo "github.com/haobuhaoo/gossip-with-go/internal/postgresql/sqlc"
 	"github.com/haobuhaoo/gossip-with-go/internal/posts"
 	"github.com/haobuhaoo/gossip-with-go/internal/topics"
 	"github.com/haobuhaoo/gossip-with-go/internal/users"
+	middleWare "github.com/haobuhaoo/gossip-with-go/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -50,21 +53,32 @@ func (app *application) mount() http.Handler {
 
 	repo := repo.New(app.db)
 
+	jwtSecret := os.Getenv("JWT_SECRET_KEY")
+	authService := auth.NewService(repo)
+	authHandler := auth.NewHandler(authService, jwtSecret)
+	auth.Routes(r, authHandler)
+
 	userService := users.NewService(repo)
 	userHandler := users.NewHandler(userService)
 	users.Routes(r, userHandler)
 
-	topicService := topics.NewService(repo)
-	topicHandler := topics.NewHandler(topicService)
-	topics.Routes(r, topicHandler)
+	r.Route("/api", func(r chi.Router) {
+		r.Use(middleWare.JWTAuth(jwtSecret))
 
-	postService := posts.NewService(repo)
-	postHandler := posts.NewHandler(postService)
-	posts.Routes(r, postHandler)
+		r.Get("/me", authHandler.AuthenticateUser)
 
-	commentService := comments.NewService(repo, app.db)
-	commentHandler := comments.NewHandler(commentService)
-	comments.Routes(r, commentHandler)
+		topicService := topics.NewService(repo)
+		topicHandler := topics.NewHandler(topicService)
+		topics.Routes(r, topicHandler)
+
+		postService := posts.NewService(repo)
+		postHandler := posts.NewHandler(postService)
+		posts.Routes(r, postHandler)
+
+		commentService := comments.NewService(repo, app.db)
+		commentHandler := comments.NewHandler(commentService)
+		comments.Routes(r, commentHandler)
+	})
 
 	return r
 }

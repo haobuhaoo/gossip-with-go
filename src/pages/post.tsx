@@ -18,7 +18,6 @@ import { truncate } from "../utils/formatters";
  * post or comment and a `DELETE` request to delete a selected comment.
  */
 const PostPage: React.FC = () => {
-    const userId: string = localStorage.getItem("token") ?? "";
     const topicId: string = useParams().topicId ?? "";
     const postId: string = useParams().postId ?? "";
     const [post, setPost] = useState<Post | null>(null);
@@ -30,7 +29,7 @@ const PostPage: React.FC = () => {
     const navigate = useNavigate();
 
     const getPost = (topicId: string, postId: string) => {
-        axiosInstance.get(`/posts/${topicId}/${postId}`)
+        axiosInstance.get(`/api/posts/${topicId}/${postId}`)
             .then(res => {
                 if (res.data) {
                     setIsError(false);
@@ -46,7 +45,7 @@ const PostPage: React.FC = () => {
     };
 
     const getAllComments = (topicId: string, postId: string) => {
-        axiosInstance.get(`/comments/all/${topicId}/${postId}`)
+        axiosInstance.get(`/api/comments/all/${topicId}/${postId}`)
             .then(res => {
                 if (res.data) {
                     setIsError(false);
@@ -84,26 +83,12 @@ const PostPage: React.FC = () => {
     /**
      * Updates the selected post. Only the author is able to update the post.
      */
-    const updatePost = (postId: number, postUserId: number, title: string, description: string) => {
+    const updatePost = (postId: number, title: string, description: string) => {
         setOpenSnackBar(false);
         setMessage("");
         setIsError(false);
 
-        if (userId == "") {
-            setIsError(true);
-            setMessage("system error: userId misssing");
-            setOpenSnackBar(true);
-            return;
-        }
-
-        if (userId != postUserId.toString()) {
-            setIsError(true);
-            setMessage("Not author. Unable to update.");
-            setOpenSnackBar(true);
-            return;
-        }
-
-        axiosInstance.put(`/posts/${postId}`, { title, description })
+        axiosInstance.put(`/api/posts/${postId}`, { title, description })
             .then(res => {
                 if (res.data) {
                     setMessage("Updated " + capitalize(title));
@@ -127,16 +112,8 @@ const PostPage: React.FC = () => {
         setMessage("");
         setIsError(false);
 
-        if (userId == "") {
-            setIsError(true);
-            setMessage("system error: userId misssing");
-            setOpenSnackBar(true);
-            return;
-        }
-
-        axiosInstance.post("/comments", {
+        axiosInstance.post("/api/comments", {
             postId: Number(postId),
-            userId: Number.parseInt(userId, 10),
             description
         })
             .then(res => {
@@ -158,27 +135,12 @@ const PostPage: React.FC = () => {
     /**
      * Updates the selected comment. Only the author is able to update the comment.
      */
-    const onUpdate = (
-        commentId: number, commentPostId: number, commentUserId: number, description: string) => {
+    const onUpdate = (commentId: number, commentPostId: number, description: string) => {
         setOpenSnackBar(false);
         setMessage("");
         setIsError(false);
 
-        if (userId == "") {
-            setIsError(true);
-            setMessage("system error: userId misssing");
-            setOpenSnackBar(true);
-            return;
-        }
-
-        if (userId != commentUserId.toString()) {
-            setIsError(true);
-            setMessage("Not author. Unable to update.");
-            setOpenSnackBar(true);
-            return;
-        }
-
-        axiosInstance.put(`/comments/${commentId}`, { postId: commentPostId, description })
+        axiosInstance.put(`/api/comments/${commentId}`, { postId: commentPostId, description })
             .then(res => {
                 if (res.data) {
                     setMessage("Comment updated!");
@@ -203,21 +165,7 @@ const PostPage: React.FC = () => {
         setMessage("");
         setIsError(false);
 
-        if (userId == "") {
-            setIsError(true);
-            setMessage("system error: userId misssing");
-            setOpenSnackBar(true);
-            return;
-        }
-
-        if (userId != c.user_id.toString()) {
-            setIsError(true);
-            setMessage("Not author. Unable to delete.");
-            setOpenSnackBar(true);
-            return;
-        }
-
-        axiosInstance.delete(`/comments/${c.comment_id}`)
+        axiosInstance.delete(`/api/comments/${c.comment_id}`)
             .then(res => {
                 if (res.data) {
                     setIsError(false);

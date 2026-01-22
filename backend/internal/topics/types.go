@@ -14,14 +14,13 @@ type Service interface {
 	FindTopicByID(ctx context.Context, id int64) (repo.Topic, error)
 	CreateTopic(ctx context.Context, arg repo.CreateTopicParams) (repo.Topic, error)
 	UpdateTopic(ctx context.Context, arg repo.UpdateTopicParams) (repo.Topic, error)
-	DeleteTopic(ctx context.Context, id int64) error
+	DeleteTopic(ctx context.Context, arg repo.DeleteTopicParams) error
 	SearchTopic(ctx context.Context, query pgtype.Text) ([]repo.Topic, error)
 }
 
 // CreateTopicRequest handles the topic related HTTP request body for creation of a new topic.
 type CreateTopicRequest struct {
-	UserID int64  `json:"userId" validate:"required,min=1"`
-	Title  string `json:"title" validate:"required"`
+	Title string `json:"title" validate:"required"`
 }
 
 // UpdateTopicRequest handles the topic related HTTP request body for updating of existing topic.

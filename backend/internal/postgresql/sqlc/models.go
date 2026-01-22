@@ -17,6 +17,13 @@ type Comment struct {
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
 
+type CommentVote struct {
+	CommentID int64              `json:"comment_id"`
+	UserID    int64              `json:"user_id"`
+	Vote      int16              `json:"vote"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
 type Post struct {
 	PostID      int64              `json:"post_id"`
 	TopicID     int64              `json:"topic_id"`
@@ -25,6 +32,13 @@ type Post struct {
 	Description string             `json:"description"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+type PostVote struct {
+	PostID    int64              `json:"post_id"`
+	UserID    int64              `json:"user_id"`
+	Vote      int16              `json:"vote"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
 type Topic struct {

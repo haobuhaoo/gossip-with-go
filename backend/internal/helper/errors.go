@@ -15,3 +15,13 @@ func IsUniqueViolation(err error) bool {
 	}
 	return false
 }
+
+// IsCheckViolation returns true if the check constraint is violated.
+func IsCheckViolation(err error) bool {
+	const checkViolationCode = "23514"
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		return pgErr.Code == checkViolationCode
+	}
+	return false
+}

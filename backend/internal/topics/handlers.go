@@ -16,6 +16,7 @@ const (
 	InvalidTopicIdMessage        = "Invalid topic id"
 	InvalidRequestBodyMessage    = "Required fields missing"
 	InvalidQueryMessage          = "Query string missing"
+	MissingUserIDMessage         = "Missing userID"
 	SuccessfulListTopicMessage   = "Successfully listed all topics"
 	SuccessfulFindTopicMessage   = "Successfully find topic"
 	SuccessfulCreateTopicMessage = "Successfully created topic"
@@ -38,7 +39,7 @@ func NewHandler(service Service) *handler {
 	}
 }
 
-// ListTopics handles GET /topics requests.
+// ListTopics handles GET /api/topics requests.
 // It calls the topic service to return all topics and serializes the result into a JSON HTTP
 // response.
 func (h *handler) ListTopics(w http.ResponseWriter, r *http.Request) {
@@ -58,7 +59,7 @@ func (h *handler) ListTopics(w http.ResponseWriter, r *http.Request) {
 	helper.Write(w, response)
 }
 
-// FindTopicByID handles GET /topics/{id} requests.
+// FindTopicByID handles GET /api/topics/{id} requests.
 // It parses the id string, and passes it to the topic service to return the specified topic,
 // which then serializes the result into a JSON HTTP response.
 func (h *handler) FindTopicByID(w http.ResponseWriter, r *http.Request) {
@@ -90,7 +91,7 @@ func (h *handler) FindTopicByID(w http.ResponseWriter, r *http.Request) {
 	helper.Write(w, response)
 }
 
-// CreateTopic handles POST /topics requests.
+// CreateTopic handles POST /api/topics requests.
 // It reads and validates the request body, and passes it to the topic service to create the new
 // topic with a unique title. It then serializes the result into a JSON HTTP response.
 func (h *handler) CreateTopic(w http.ResponseWriter, r *http.Request) {
@@ -107,8 +108,14 @@ func (h *handler) CreateTopic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userId, ok := r.Context().Value("userID").(int64)
+	if !ok {
+		helper.WriteError(w, MissingUserIDMessage, http.StatusBadRequest)
+		return
+	}
+
 	newTopic := repo.CreateTopicParams{
-		UserID: req.UserID,
+		UserID: userId,
 		Title:  req.Title,
 	}
 	topic, err := h.service.CreateTopic(r.Context(), newTopic)
@@ -132,7 +139,7 @@ func (h *handler) CreateTopic(w http.ResponseWriter, r *http.Request) {
 	helper.Write(w, response)
 }
 
-// UpdateTopic handles PUT /topics/{id} requests.
+// UpdateTopic handles PUT /api/topics/{id} requests.
 // It parses the id string, reads and validates the request body, and passes it to the topic
 // service to update the existing topic with the new title. It then serializes the result into a
 // JSON HTTP response.
@@ -157,8 +164,15 @@ func (h *handler) UpdateTopic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userId, ok := r.Context().Value("userID").(int64)
+	if !ok {
+		helper.WriteError(w, MissingUserIDMessage, http.StatusBadRequest)
+		return
+	}
+
 	newTopic := repo.UpdateTopicParams{
 		TopicID: id,
+		UserID:  userId,
 		Title:   req.Title,
 	}
 	topic, err := h.service.UpdateTopic(r.Context(), newTopic)
@@ -186,7 +200,7 @@ func (h *handler) UpdateTopic(w http.ResponseWriter, r *http.Request) {
 	helper.Write(w, response)
 }
 
-// DeleteTopic handles DELETE /topics/{id} requests.
+// DeleteTopic handles DELETE /api/topics/{id} requests.
 // It parses the id string, and passes it to the topic service to delete the specified topic,
 // which then serializes the result into a JSON HTTP response.
 func (h *handler) DeleteTopic(w http.ResponseWriter, r *http.Request) {
@@ -197,7 +211,17 @@ func (h *handler) DeleteTopic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.service.DeleteTopic(r.Context(), id)
+	userId, ok := r.Context().Value("userID").(int64)
+	if !ok {
+		helper.WriteError(w, MissingUserIDMessage, http.StatusBadRequest)
+		return
+	}
+
+	arg := repo.DeleteTopicParams{
+		TopicID: id,
+		UserID:  userId,
+	}
+	err = h.service.DeleteTopic(r.Context(), arg)
 	if err != nil {
 		if err == ErrTopicNotFound {
 			helper.WriteError(w, ErrTopicNotFound.Error(), http.StatusNotFound)
@@ -212,7 +236,7 @@ func (h *handler) DeleteTopic(w http.ResponseWriter, r *http.Request) {
 	helper.Write(w, response)
 }
 
-// SearchTopic handles GET /search requests.
+// SearchTopic handles GET /api/topics/search requests.
 // It parses the query string and passes it to the topic service to search for all topic titles
 // that contains the query string (case-insensitive), which then serializes the result into a
 // JSON HTTP response.

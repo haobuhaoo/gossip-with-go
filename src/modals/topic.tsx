@@ -32,10 +32,9 @@ type Props = {
     onCreate: (newTopic: string) => void;
 
     /**
-     * Function that passes the updated `newTopic` to parent component, along with its `topicId`
-     * and `topicUserId`.
+     * Function that passes the updated `newTopic` to parent component, along with its `topicId`.
      */
-    onUpdate: (topicId: number, topicUserId: number, newTopic: string) => void;
+    onUpdate: (topicId: number, newTopic: string) => void;
 }
 
 /**
@@ -67,7 +66,7 @@ const TopicModal: React.FC<Props> = ({ open, close, topic, isUpdate, onCreate, o
                 setError("system error: topic missing");
                 return;
             }
-            onUpdate(topic.topic_id, topic.user_id, newTopic);
+            onUpdate(topic.topic_id, newTopic);
             setNewTopic("");
             setError(" ");
             return;

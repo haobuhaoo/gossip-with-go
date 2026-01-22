@@ -9,8 +9,11 @@ func Routes(router chi.Router, h *handler) {
 		r.Get("/all/{topicId}", h.FindPostsByTopic)
 		r.Get("/{topicId}/search", h.SearchPost)
 		r.Get("/{topicId}/{postId}", h.FindPostByID)
+		r.Post("/{id}/likes", h.LikesPost)
+		r.Post("/{id}/dislikes", h.DislikesPost)
 		r.Post("/", h.CreatePost)
 		r.Put("/{id}", h.UpdatePost)
+		r.Delete("/{id}/remove", h.RemovePostVote)
 		r.Delete("/{id}", h.DeletePost)
 	})
 }

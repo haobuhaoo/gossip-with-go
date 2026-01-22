@@ -19,6 +19,12 @@ INSERT INTO Comments (user_id, post_id, description) VALUES
 -- Comments for Post 3
 (1, 3, 'Greek yogurt with honey and berries works great for me.'),
 (2, 3, 'Dark chocolate with a high cocoa percentage can satisfy sweet cravings.');
+
+INSERT INTO Post_Votes (post_id, user_id, vote) VALUES
+(1, 1, 1), (1, 2, 1), (1, 3, -1), (2, 2, -1), (2, 3, -1), (3, 1, 1), (3, 2, 1), (3, 3, 1);
+
+INSERT INTO Comment_Votes (comment_id, user_id, vote) VALUES
+(1, 1, 1), (1, 2, 1), (2, 2, -1), (2, 3, -1), (3, 1, 1), (3, 2, 1), (3, 3, 1), (5, 3, -1), (6, 1, 1), (6, 2, -1);
 -- +goose StatementEnd
 
 -- +goose Down

@@ -248,19 +248,13 @@ func (h *handler) LikesComment(w http.ResponseWriter, r *http.Request) {
 		CommentID: id,
 		UserID:    userId,
 	}
-	vote, err := h.service.LikesComment(r.Context(), arg)
+	err = h.service.LikesComment(r.Context(), arg)
 	if err != nil {
 		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	jsonVote, err := json.Marshal(vote)
-	if err != nil {
-		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	response := helper.ParseResponseDataAndMessage(jsonVote, SuccessfulLikeCommentMessage)
+	response := helper.ParseResponseMessage(SuccessfulLikeCommentMessage)
 	helper.Write(w, response)
 }
 
@@ -285,19 +279,13 @@ func (h *handler) DislikesComment(w http.ResponseWriter, r *http.Request) {
 		CommentID: id,
 		UserID:    userId,
 	}
-	vote, err := h.service.DislikesComment(r.Context(), arg)
+	err = h.service.DislikesComment(r.Context(), arg)
 	if err != nil {
 		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	jsonVote, err := json.Marshal(vote)
-	if err != nil {
-		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	response := helper.ParseResponseDataAndMessage(jsonVote, SuccessfulDislikeCommentMessage)
+	response := helper.ParseResponseMessage(SuccessfulDislikeCommentMessage)
 	helper.Write(w, response)
 }
 

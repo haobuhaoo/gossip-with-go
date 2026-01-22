@@ -14,8 +14,8 @@ type Service interface {
 	CreateComment(ctx context.Context, arg repo.CreateCommentParams) (repo.Comment, error)
 	UpdateComment(ctx context.Context, arg repo.UpdateCommentParams) (repo.Comment, error)
 	DeleteComment(ctx context.Context, arg repo.DeleteCommentParams) error
-	LikesComment(ctx context.Context, arg repo.LikesCommentParams) (repo.CommentVote, error)
-	DislikesComment(ctx context.Context, arg repo.DislikesCommentParams) (repo.CommentVote, error)
+	LikesComment(ctx context.Context, arg repo.LikesCommentParams) error
+	DislikesComment(ctx context.Context, arg repo.DislikesCommentParams) error
 	RemoveCommentVote(ctx context.Context, arg repo.RemoveCommentVoteParams) error
 }
 

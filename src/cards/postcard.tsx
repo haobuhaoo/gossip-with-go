@@ -10,6 +10,7 @@ import { useAuth } from "../context/authcontext";
 import AvatarIcon from "../components/avataricon";
 import DisplayAuthor from "../components/displayauthor";
 import EditButton from "../components/editbutton";
+import VoteButton from "../components/votebutton";
 
 import EmptyList from "./emptylist";
 import CommentListCard from "./commentlistcard";
@@ -45,13 +46,32 @@ type Props = {
      * Function that passes comment to be deleted to parent component.
      */
     onDelete: (c: Comment) => void;
+
+    /**
+     * Function that passes the commentId and entityType back to the parent component to indicate a
+     * like for the comment.
+     */
+    onLike: (id: number, entityType: string) => void;
+
+    /**
+     * Function that passes the commentId and entityType back to the parent component to indicate a
+     * dislike for the comment.
+     */
+    onDislike: (id: number, entityType: string) => void;
+
+    /**
+     * Function that passes the commentId and entityType back to the parent component to remove user's
+     * vote for the comment.
+     */
+    onRemoveVote: (id: number, entityType: string) => void;
 }
 
 /**
- * Renders a full post with its comments, which allows the creation, edit and deletion of comments.
+ * Renders a full post with its comments, which allows the edit, like and dislike of post, and the
+ * creation, edit, deletion, like and dislike of comments.
  */
-const PostCard: React.FC<Props> = ({
-    post, commentList, openPostModal, onCreate, onUpdate, onDelete }) => {
+const PostCard: React.FC<Props> = ({ post, commentList, openPostModal, onCreate, onUpdate,
+    onDelete, onLike, onDislike, onRemoveVote }) => {
     const [comment, setComment] = useState<string>("");
     const { auth } = useAuth();
 
@@ -78,7 +98,7 @@ const PostCard: React.FC<Props> = ({
                 "&:hover": { boxShadow: "0 6px 12px rgba(0, 0, 0, 0.12)" },
             }}>
             <CardContent sx={{ display: "flex", flexDirection: "column" }}>
-                <Box sx={{ display: "flex", flexDirection: "row", gap: 2, mx: "16px" }}>
+                <Box sx={{ display: "flex", gap: 2, mx: "16px" }}>
                     <AvatarIcon username={post.username} />
                     <DisplayAuthor entity={post} />
 
@@ -113,17 +133,33 @@ const PostCard: React.FC<Props> = ({
                     {capitalize(post.description)}
                 </Typography>
 
+                <Box sx={{ display: "flex", mt: 2, ml: "8px", gap: 1 }}>
+                    {["likes", "dislikes"].map((s: string) => (
+                        <VoteButton
+                            key={s}
+                            type={s == "likes" ? "like" : "dislike"}
+                            vote={post.user_vote}
+                            voteCount={s == "likes" ? post.likes : post.dislikes}
+                            id={post.post_id}
+                            entityType="post"
+                            onLike={onLike}
+                            onDislike={onDislike}
+                            onRemoveVote={onRemoveVote}
+                        />
+                    ))}
+                </Box>
+
                 <Box
                     component="form"
                     onSubmit={handleSubmit}
-                    sx={{ mt: 3, mx: 1 }}>
+                    sx={{ my: 1, mx: 1 }}>
                     <TextField
                         id="comment"
                         value={comment}
                         placeholder="Join the conversation"
                         autoComplete="off"
                         multiline
-                        rows={2}
+                        maxRows={2}
                         onChange={handleChange}
                         required
                         fullWidth
@@ -149,6 +185,9 @@ const PostCard: React.FC<Props> = ({
                             isUser={auth.userId == c.user_id.toString()}
                             onUpdate={onUpdate}
                             onDelete={onDelete}
+                            onLike={onLike}
+                            onDislike={onDislike}
+                            onRemoveVote={onRemoveVote}
                         />
                     ))
                 }

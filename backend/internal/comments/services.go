@@ -75,11 +75,7 @@ func (s *svc) CreateComment(ctx context.Context, arg repo.CreateCommentParams) (
 		return repo.Comment{}, err
 	}
 
-	statusArg := repo.UpdatePostStatusParams{
-		PostID: arg.PostID,
-		UserID: arg.UserID,
-	}
-	_, err = qtx.UpdatePostStatus(ctx, statusArg)
+	err = qtx.UpdatePostStatus(ctx, arg.PostID)
 	if err != nil {
 		return repo.Comment{}, ErrPostNotUpdated
 	}
@@ -108,11 +104,7 @@ func (s *svc) UpdateComment(ctx context.Context, arg repo.UpdateCommentParams) (
 		return repo.Comment{}, err
 	}
 
-	statusArg := repo.UpdatePostStatusParams{
-		PostID: arg.PostID,
-		UserID: arg.UserID,
-	}
-	_, err = qtx.UpdatePostStatus(ctx, statusArg)
+	err = qtx.UpdatePostStatus(ctx, arg.PostID)
 	if err != nil {
 		return repo.Comment{}, ErrPostNotUpdated
 	}
@@ -136,23 +128,23 @@ func (s *svc) DeleteComment(ctx context.Context, arg repo.DeleteCommentParams) e
 }
 
 // LikesComment increments the like count for the specific comment by 1.
-func (s *svc) LikesComment(ctx context.Context, arg repo.LikesCommentParams) (repo.CommentVote, error) {
-	comment, err := s.repo.LikesComment(ctx, arg)
+func (s *svc) LikesComment(ctx context.Context, arg repo.LikesCommentParams) error {
+	err := s.repo.LikesComment(ctx, arg)
 	if err != nil {
-		return repo.CommentVote{}, err
+		return err
 	}
 
-	return comment, nil
+	return nil
 }
 
 // DislikesComment increments the dislike count for the specific comment by 1.
-func (s *svc) DislikesComment(ctx context.Context, arg repo.DislikesCommentParams) (repo.CommentVote, error) {
-	comment, err := s.repo.DislikesComment(ctx, arg)
+func (s *svc) DislikesComment(ctx context.Context, arg repo.DislikesCommentParams) error {
+	err := s.repo.DislikesComment(ctx, arg)
 	if err != nil {
-		return repo.CommentVote{}, err
+		return err
 	}
 
-	return comment, nil
+	return nil
 }
 
 // RemoveCommentVote removes the user's vote for that specific comment.

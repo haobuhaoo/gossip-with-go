@@ -352,19 +352,13 @@ func (h *handler) LikesPost(w http.ResponseWriter, r *http.Request) {
 		PostID: id,
 		UserID: userId,
 	}
-	vote, err := h.service.LikesPost(r.Context(), arg)
+	err = h.service.LikesPost(r.Context(), arg)
 	if err != nil {
 		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	jsonVote, err := json.Marshal(vote)
-	if err != nil {
-		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	response := helper.ParseResponseDataAndMessage(jsonVote, SuccessfulLikePostMessage)
+	response := helper.ParseResponseMessage(SuccessfulLikePostMessage)
 	helper.Write(w, response)
 }
 
@@ -389,19 +383,13 @@ func (h *handler) DislikesPost(w http.ResponseWriter, r *http.Request) {
 		PostID: id,
 		UserID: userId,
 	}
-	vote, err := h.service.DislikesPost(r.Context(), arg)
+	err = h.service.DislikesPost(r.Context(), arg)
 	if err != nil {
 		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	jsonVote, err := json.Marshal(vote)
-	if err != nil {
-		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	response := helper.ParseResponseDataAndMessage(jsonVote, SuccessfulDislikePostMessage)
+	response := helper.ParseResponseMessage(SuccessfulDislikePostMessage)
 	helper.Write(w, response)
 }
 

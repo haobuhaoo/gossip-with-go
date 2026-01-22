@@ -34,13 +34,32 @@ type Props = {
      * Function that passes post to be deleted to parent component.
      */
     onDelete: (t: Post) => void;
+
+    /**
+     * Function that passes the postId number and entityType back to the parent component to indicate a
+     * like for the post.
+     */
+    onLike: (id: number, entityType: string) => void;
+
+    /**
+     * Function that passes the postId number and entityType back to the parent component to indicate a
+     * dislike for the post.
+     */
+    onDislike: (id: number, entityType: string) => void;
+
+    /**
+     * Function that passes the postId number and entityType back to the parent component to remove user's
+     * vote for the post.
+     */
+    onRemoveVote: (id: number, entityType: string) => void;
 }
 
 /**
- * Renders a single post inside a card, which calls `handleClick`, `openPostModal` and
- * `onDelete` when clicked.
+ * Renders a single post inside a card, which calls `handleClick`, `openPostModal`, `onDelete`,
+ * `onLike`, `onDislike` and `onRemoveVote` when clicked.
  */
-const PostListCard: React.FC<Props> = ({ post, isUser, handleClick, openPostModal, onDelete }) => {
+const PostListCard: React.FC<Props> = ({
+    post, isUser, handleClick, openPostModal, onDelete, onLike, onDislike, onRemoveVote }) => {
     return (
         <Card
             onClick={() => handleClick(post.post_id)}
@@ -55,7 +74,7 @@ const PostListCard: React.FC<Props> = ({ post, isUser, handleClick, openPostModa
                 "&:hover": { boxShadow: "0 6px 12px rgba(0, 0, 0, 0.12)" },
             }}>
             <CardContent sx={{ display: "flex", flexDirection: "column" }}>
-                <Box sx={{ display: "flex", flexDirection: "row", gap: 2, mx: "8px" }}>
+                <Box sx={{ display: "flex", gap: 2, mx: "8px" }}>
                     <AvatarIcon username={post.username} />
                     <DisplayAuthor entity={post} />
 
@@ -106,17 +125,20 @@ const PostListCard: React.FC<Props> = ({ post, isUser, handleClick, openPostModa
                     {capitalize(post.description)}
                 </Typography>
 
-                <Box sx={{ display: "flex", flexDirection: "row", mt: 2, gap: 1 }}>
-                    <VoteButton
-                        type="like"
-                        vote={1}
-                        voteCount={post.likes}
-                    />
-                    <VoteButton
-                        type="dislike"
-                        vote={-1}
-                        voteCount={post.dislikes}
-                    />
+                <Box sx={{ display: "flex", mt: 2, gap: 1 }}>
+                    {["likes", "dislikes"].map((s: string) => (
+                        <VoteButton
+                            key={s}
+                            type={s == "likes" ? "like" : "dislike"}
+                            vote={post.user_vote}
+                            voteCount={s == "likes" ? post.likes : post.dislikes}
+                            id={post.post_id}
+                            entityType="post"
+                            onLike={onLike}
+                            onDislike={onDislike}
+                            onRemoveVote={onRemoveVote}
+                        />
+                    ))}
                 </Box>
             </CardContent>
         </Card>

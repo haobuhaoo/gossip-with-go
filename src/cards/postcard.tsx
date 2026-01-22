@@ -136,6 +136,7 @@ const PostCard: React.FC<Props> = ({ post, commentList, openPostModal, onCreate,
                 <Box sx={{ display: "flex", mt: 2, ml: "8px", gap: 1 }}>
                     {["likes", "dislikes"].map((s: string) => (
                         <VoteButton
+                            key={s}
                             type={s == "likes" ? "like" : "dislike"}
                             vote={post.user_vote}
                             voteCount={s == "likes" ? post.likes : post.dislikes}

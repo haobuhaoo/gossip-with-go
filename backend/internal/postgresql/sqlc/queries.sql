@@ -59,8 +59,8 @@ INSERT INTO Posts (topic_id, user_id, title, description) VALUES ($1, $2, $3, $4
 -- name: UpdatePost :one
 UPDATE Posts SET title = $3, description = $4, updated_at = now() WHERE post_id = $1 AND user_id = $2 RETURNING *;
 
--- name: UpdatePostStatus :one
-UPDATE Posts SET updated_at = now() WHERE post_id = $1 AND user_id = $2 RETURNING *;
+-- name: UpdatePostStatus :exec
+UPDATE Posts SET updated_at = now() WHERE post_id = $1 RETURNING *;
 
 -- name: DeletePost :execrows
 DELETE FROM Posts WHERE post_id = $1 AND user_id = $2;
@@ -102,29 +102,25 @@ WHERE comment_id = $1 AND post_id = $2 AND user_id = $3 RETURNING *;
 DELETE FROM Comments WHERE comment_id = $1 AND user_id = $2;
 
 -- Post Votes
--- name: LikesPost :one
+-- name: LikesPost :exec
 INSERT INTO Post_Votes (post_id, user_id, vote) VALUES ($1, $2, 1)
-ON CONFLICT (post_id, user_id) DO UPDATE SET vote = 1 WHERE Post_Votes.vote <> 1 RETURNING *;
+ON CONFLICT (post_id, user_id) DO UPDATE SET vote = 1 WHERE Post_Votes.vote <> 1;
 
--- name: DislikesPost :one
+-- name: DislikesPost :exec
 INSERT INTO Post_Votes (post_id, user_id, vote) VALUES ($1, $2, -1)
-ON CONFLICT (post_id, user_id) DO UPDATE SET vote = -1 WHERE Post_Votes.vote <> -1 RETURNING *;
+ON CONFLICT (post_id, user_id) DO UPDATE SET vote = -1 WHERE Post_Votes.vote <> -1;
 
 -- name: RemovePostVote :execrows
 DELETE FROM Post_Votes WHERE post_id = $1 AND user_id = $2;
 
 -- Comment Votes
--- name: LikesComment :one
+-- name: LikesComment :exec
 INSERT INTO Comment_Votes (comment_id, user_id, vote) VALUES ($1, $2, 1)
-ON CONFLICT (comment_id, user_id) DO UPDATE SET vote = 1 WHERE Comment_Votes.vote <> 1 RETURNING *;
+ON CONFLICT (comment_id, user_id) DO UPDATE SET vote = 1 WHERE Comment_Votes.vote <> 1;
 
--- name: DislikesComment :one
+-- name: DislikesComment :exec
 INSERT INTO Comment_Votes (comment_id, user_id, vote) VALUES ($1, $2, -1)
-ON CONFLICT (comment_id, user_id) DO UPDATE SET vote = -1 WHERE Comment_Votes.vote <> -1 RETURNING *;
+ON CONFLICT (comment_id, user_id) DO UPDATE SET vote = -1 WHERE Comment_Votes.vote <> -1;
 
 -- name: RemoveCommentVote :execrows
 DELETE FROM Comment_Votes WHERE comment_id = $1 AND user_id = $2;
-
--- name: CountVote :one
-SELECT COUNT(*) FILTER (WHERE vote = 1) AS likes, COUNT(*) FILTER (WHERE vote = -1) AS dislikes
-FROM Comment_Votes WHERE comment_id = $1;

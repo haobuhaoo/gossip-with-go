@@ -139,6 +139,7 @@ const CommentListCard: React.FC<Props> = ({
                         <Box sx={{ display: "flex", mt: 1, gap: 1 }}>
                             {["likes", "dislikes"].map((s: string) => (
                                 <VoteButton
+                                    key={s}
                                     type={s == "likes" ? "like" : "dislike"}
                                     vote={comment.user_vote}
                                     voteCount={s == "likes" ? comment.likes : comment.dislikes}

@@ -16,8 +16,8 @@ type Service interface {
 	UpdatePost(ctx context.Context, arg repo.UpdatePostParams) (repo.Post, error)
 	DeletePost(ctx context.Context, arg repo.DeletePostParams) error
 	SearchPost(ctx context.Context, arg repo.SearchPostParams) ([]Post, error)
-	LikesPost(ctx context.Context, arg repo.LikesPostParams) (repo.PostVote, error)
-	DislikesPost(ctx context.Context, arg repo.DislikesPostParams) (repo.PostVote, error)
+	LikesPost(ctx context.Context, arg repo.LikesPostParams) error
+	DislikesPost(ctx context.Context, arg repo.DislikesPostParams) error
 	RemovePostVote(ctx context.Context, arg repo.RemovePostVoteParams) error
 }
 

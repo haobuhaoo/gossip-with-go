@@ -128,6 +128,7 @@ const PostListCard: React.FC<Props> = ({
                 <Box sx={{ display: "flex", mt: 2, gap: 1 }}>
                     {["likes", "dislikes"].map((s: string) => (
                         <VoteButton
+                            key={s}
                             type={s == "likes" ? "like" : "dislike"}
                             vote={post.user_vote}
                             voteCount={s == "likes" ? post.likes : post.dislikes}

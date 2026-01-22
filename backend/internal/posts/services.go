@@ -150,24 +150,24 @@ func (s *svc) SearchPost(ctx context.Context, arg repo.SearchPostParams) ([]Post
 	return posts, nil
 }
 
-// LikesPost increments the like count for the specific post by 1 and returns the vote.
-func (s *svc) LikesPost(ctx context.Context, arg repo.LikesPostParams) (repo.PostVote, error) {
-	post, err := s.repo.LikesPost(ctx, arg)
+// LikesPost increments the like count for the specific post by 1.
+func (s *svc) LikesPost(ctx context.Context, arg repo.LikesPostParams) error {
+	err := s.repo.LikesPost(ctx, arg)
 	if err != nil {
-		return repo.PostVote{}, err
+		return err
 	}
 
-	return post, nil
+	return nil
 }
 
-// DislikesPost increments the dislike count for the specific post by 1 and returns the vote.
-func (s *svc) DislikesPost(ctx context.Context, arg repo.DislikesPostParams) (repo.PostVote, error) {
-	post, err := s.repo.DislikesPost(ctx, arg)
+// DislikesPost increments the dislike count for the specific post by 1.
+func (s *svc) DislikesPost(ctx context.Context, arg repo.DislikesPostParams) error {
+	err := s.repo.DislikesPost(ctx, arg)
 	if err != nil {
-		return repo.PostVote{}, err
+		return err
 	}
 
-	return post, nil
+	return nil
 }
 
 // RemovePostVote removes the user's vote for that specific post.

@@ -11,23 +11,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const countVote = `-- name: CountVote :one
-SELECT COUNT(*) FILTER (WHERE vote = 1) AS likes, COUNT(*) FILTER (WHERE vote = -1) AS dislikes
-FROM Comment_Votes WHERE comment_id = $1
-`
-
-type CountVoteRow struct {
-	Likes    int64 `json:"likes"`
-	Dislikes int64 `json:"dislikes"`
-}
-
-func (q *Queries) CountVote(ctx context.Context, commentID int64) (CountVoteRow, error) {
-	row := q.db.QueryRow(ctx, countVote, commentID)
-	var i CountVoteRow
-	err := row.Scan(&i.Likes, &i.Dislikes)
-	return i, err
-}
-
 const createComment = `-- name: CreateComment :one
 INSERT INTO Comments (user_id, post_id, description) VALUES ($1, $2, $3) RETURNING comment_id, post_id, user_id, description, created_at, updated_at
 `
@@ -166,9 +149,9 @@ func (q *Queries) DeleteTopic(ctx context.Context, arg DeleteTopicParams) (int64
 	return result.RowsAffected(), nil
 }
 
-const dislikesComment = `-- name: DislikesComment :one
+const dislikesComment = `-- name: DislikesComment :exec
 INSERT INTO Comment_Votes (comment_id, user_id, vote) VALUES ($1, $2, -1)
-ON CONFLICT (comment_id, user_id) DO UPDATE SET vote = -1 WHERE Comment_Votes.vote <> -1 RETURNING comment_id, user_id, vote, created_at
+ON CONFLICT (comment_id, user_id) DO UPDATE SET vote = -1 WHERE Comment_Votes.vote <> -1
 `
 
 type DislikesCommentParams struct {
@@ -176,21 +159,14 @@ type DislikesCommentParams struct {
 	UserID    int64 `json:"user_id"`
 }
 
-func (q *Queries) DislikesComment(ctx context.Context, arg DislikesCommentParams) (CommentVote, error) {
-	row := q.db.QueryRow(ctx, dislikesComment, arg.CommentID, arg.UserID)
-	var i CommentVote
-	err := row.Scan(
-		&i.CommentID,
-		&i.UserID,
-		&i.Vote,
-		&i.CreatedAt,
-	)
-	return i, err
+func (q *Queries) DislikesComment(ctx context.Context, arg DislikesCommentParams) error {
+	_, err := q.db.Exec(ctx, dislikesComment, arg.CommentID, arg.UserID)
+	return err
 }
 
-const dislikesPost = `-- name: DislikesPost :one
+const dislikesPost = `-- name: DislikesPost :exec
 INSERT INTO Post_Votes (post_id, user_id, vote) VALUES ($1, $2, -1)
-ON CONFLICT (post_id, user_id) DO UPDATE SET vote = -1 WHERE Post_Votes.vote <> -1 RETURNING post_id, user_id, vote, created_at
+ON CONFLICT (post_id, user_id) DO UPDATE SET vote = -1 WHERE Post_Votes.vote <> -1
 `
 
 type DislikesPostParams struct {
@@ -198,16 +174,9 @@ type DislikesPostParams struct {
 	UserID int64 `json:"user_id"`
 }
 
-func (q *Queries) DislikesPost(ctx context.Context, arg DislikesPostParams) (PostVote, error) {
-	row := q.db.QueryRow(ctx, dislikesPost, arg.PostID, arg.UserID)
-	var i PostVote
-	err := row.Scan(
-		&i.PostID,
-		&i.UserID,
-		&i.Vote,
-		&i.CreatedAt,
-	)
-	return i, err
+func (q *Queries) DislikesPost(ctx context.Context, arg DislikesPostParams) error {
+	_, err := q.db.Exec(ctx, dislikesPost, arg.PostID, arg.UserID)
+	return err
 }
 
 const findCommentsByPost = `-- name: FindCommentsByPost :many
@@ -430,9 +399,9 @@ func (q *Queries) FindUserByName(ctx context.Context, name string) (User, error)
 	return i, err
 }
 
-const likesComment = `-- name: LikesComment :one
+const likesComment = `-- name: LikesComment :exec
 INSERT INTO Comment_Votes (comment_id, user_id, vote) VALUES ($1, $2, 1)
-ON CONFLICT (comment_id, user_id) DO UPDATE SET vote = 1 WHERE Comment_Votes.vote <> 1 RETURNING comment_id, user_id, vote, created_at
+ON CONFLICT (comment_id, user_id) DO UPDATE SET vote = 1 WHERE Comment_Votes.vote <> 1
 `
 
 type LikesCommentParams struct {
@@ -441,21 +410,14 @@ type LikesCommentParams struct {
 }
 
 // Comment Votes
-func (q *Queries) LikesComment(ctx context.Context, arg LikesCommentParams) (CommentVote, error) {
-	row := q.db.QueryRow(ctx, likesComment, arg.CommentID, arg.UserID)
-	var i CommentVote
-	err := row.Scan(
-		&i.CommentID,
-		&i.UserID,
-		&i.Vote,
-		&i.CreatedAt,
-	)
-	return i, err
+func (q *Queries) LikesComment(ctx context.Context, arg LikesCommentParams) error {
+	_, err := q.db.Exec(ctx, likesComment, arg.CommentID, arg.UserID)
+	return err
 }
 
-const likesPost = `-- name: LikesPost :one
+const likesPost = `-- name: LikesPost :exec
 INSERT INTO Post_Votes (post_id, user_id, vote) VALUES ($1, $2, 1)
-ON CONFLICT (post_id, user_id) DO UPDATE SET vote = 1 WHERE Post_Votes.vote <> 1 RETURNING post_id, user_id, vote, created_at
+ON CONFLICT (post_id, user_id) DO UPDATE SET vote = 1 WHERE Post_Votes.vote <> 1
 `
 
 type LikesPostParams struct {
@@ -464,16 +426,9 @@ type LikesPostParams struct {
 }
 
 // Post Votes
-func (q *Queries) LikesPost(ctx context.Context, arg LikesPostParams) (PostVote, error) {
-	row := q.db.QueryRow(ctx, likesPost, arg.PostID, arg.UserID)
-	var i PostVote
-	err := row.Scan(
-		&i.PostID,
-		&i.UserID,
-		&i.Vote,
-		&i.CreatedAt,
-	)
-	return i, err
+func (q *Queries) LikesPost(ctx context.Context, arg LikesPostParams) error {
+	_, err := q.db.Exec(ctx, likesPost, arg.PostID, arg.UserID)
+	return err
 }
 
 const listTopics = `-- name: ListTopics :many
@@ -697,28 +652,13 @@ func (q *Queries) UpdatePost(ctx context.Context, arg UpdatePostParams) (Post, e
 	return i, err
 }
 
-const updatePostStatus = `-- name: UpdatePostStatus :one
-UPDATE Posts SET updated_at = now() WHERE post_id = $1 AND user_id = $2 RETURNING post_id, topic_id, user_id, title, description, created_at, updated_at
+const updatePostStatus = `-- name: UpdatePostStatus :exec
+UPDATE Posts SET updated_at = now() WHERE post_id = $1 RETURNING post_id, topic_id, user_id, title, description, created_at, updated_at
 `
 
-type UpdatePostStatusParams struct {
-	PostID int64 `json:"post_id"`
-	UserID int64 `json:"user_id"`
-}
-
-func (q *Queries) UpdatePostStatus(ctx context.Context, arg UpdatePostStatusParams) (Post, error) {
-	row := q.db.QueryRow(ctx, updatePostStatus, arg.PostID, arg.UserID)
-	var i Post
-	err := row.Scan(
-		&i.PostID,
-		&i.TopicID,
-		&i.UserID,
-		&i.Title,
-		&i.Description,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
+func (q *Queries) UpdatePostStatus(ctx context.Context, postID int64) error {
+	_, err := q.db.Exec(ctx, updatePostStatus, postID)
+	return err
 }
 
 const updateTopic = `-- name: UpdateTopic :one

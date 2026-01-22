@@ -32,6 +32,9 @@ export interface Comment {
     user_id: number;
     username: string;
     description: string;
+    likes: number;
+    dislikes: number;
+    user_vote: 1 | -1 | null;
     created_at: string;
     updated_at: string;
 }

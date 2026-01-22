@@ -19,7 +19,8 @@ import { truncate } from "../utils/formatters";
 /**
  * Renders a topic page that sends a `GET` request to fetch and displays all posts under the
  * specific topic, a `POST` request to create a new post, a `PUT` request to update an existing
- * post and a `DELETE` request to delete a selected post.
+ * post and a `DELETE` request to delete a selected post. It also sends a `POST` request to like
+ * and dislike a post, and a `DELETE` request to remove the user's vote.
  */
 const TopicPage: React.FC = () => {
     const topicId: string = useParams().topicId ?? "";
@@ -170,6 +171,69 @@ const TopicPage: React.FC = () => {
             .finally(() => setOpenSnackBar(true));
     };
 
+    const onLike = (id: number) => {
+        setOpenSnackBar(false);
+        setMessage("");
+        setIsError(false);
+
+        axiosInstance.post(`/api/posts/${id}/likes`)
+            .then(res => {
+                if (res.data) {
+                    getAllPosts(topicId);
+                    setIsError(false);
+                    setMessage("Liked!");
+                }
+            })
+            .catch(err => {
+                console.error("unable to like post: " + err);
+                setIsError(true);
+                setMessage(err);
+            })
+            .finally(() => setOpenSnackBar(true));
+    };
+
+    const onDislike = (id: number) => {
+        setOpenSnackBar(false);
+        setMessage("");
+        setIsError(false);
+
+        axiosInstance.post(`/api/posts/${id}/dislikes`)
+            .then(res => {
+                if (res.data) {
+                    getAllPosts(topicId);
+                    setIsError(false);
+                    setMessage("Disliked!");
+                }
+            })
+            .catch(err => {
+                console.error("unable to dislike post: " + err);
+                setIsError(true);
+                setMessage(err);
+            })
+            .finally(() => setOpenSnackBar(true));
+    };
+
+    const onRemoveVote = (id: number) => {
+        setOpenSnackBar(false);
+        setMessage("");
+        setIsError(false);
+
+        axiosInstance.delete(`/api/posts/${id}/remove`)
+            .then(res => {
+                if (res.data) {
+                    getAllPosts(topicId);
+                    setIsError(false);
+                    setMessage("Removed");
+                }
+            })
+            .catch(err => {
+                console.error("unable to remove vote on post: " + err);
+                setIsError(true);
+                setMessage(err);
+            })
+            .finally(() => setOpenSnackBar(true));
+    };
+
     useEffect(() => {
         setIsError(false);
         setMessage("");
@@ -220,6 +284,9 @@ const TopicPage: React.FC = () => {
                         handleClick={handleClick}
                         openPostModal={openPostModal}
                         onDelete={onDelete}
+                        onLike={onLike}
+                        onDislike={onDislike}
+                        onRemoveVote={onRemoveVote}
                     />
                 ))
             }

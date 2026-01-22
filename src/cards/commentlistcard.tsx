@@ -7,6 +7,7 @@ import AvatarIcon from "../components/avataricon";
 import DeleteButton from "../components/deletebutton";
 import DisplayAuthor from "../components/displayauthor";
 import EditButton from "../components/editbutton";
+import VoteButton from "../components/votebutton";
 
 type Props = {
     /**
@@ -29,12 +30,32 @@ type Props = {
      * Function that passes comment to be deleted to parent component.
      */
     onDelete: (c: Comment) => void;
+
+    /**
+     * Function that passes the commentId number and entityType back to the parent component to indicate
+     * a like for the comment.
+     */
+    onLike: (id: number, entity: string) => void;
+
+    /**
+     * Function that passes the commentId number and entityType back to the parent component to indicate
+     * a dislike for the comment.
+     */
+    onDislike: (id: number, entity: string) => void;
+
+    /**
+     * Function that passes the commentId number and entityType back to the parent component to remove
+     * user's vote for the comment.
+     */
+    onRemoveVote: (id: number, entity: string) => void;
 }
 
 /**
- * Renders a single comment inside a card, which calls `onUpdate` and `onDelete`when clicked.
+ * Renders a single comment inside a card, which calls `onUpdate`, `onDelete`, `onLike`, `onDislike`
+ * and `onRemoveVote` when clicked.
  */
-const CommentListCard: React.FC<Props> = ({ comment, isUser, onUpdate, onDelete }) => {
+const CommentListCard: React.FC<Props> = ({
+    comment, isUser, onUpdate, onDelete, onLike, onDislike, onRemoveVote }) => {
     const [desc, setDesc] = useState<string>(comment.description ?? "");
     const [isUpdate, setIsUpdate] = useState<boolean>(false);
 
@@ -56,7 +77,7 @@ const CommentListCard: React.FC<Props> = ({ comment, isUser, onUpdate, onDelete 
     return (
         <Card sx={{ boxShadow: 0 }}>
             <CardContent sx={{ display: "flex", flexDirection: "column" }}>
-                <Box sx={{ display: "flex", flexDirection: "row", gap: 2 }}>
+                <Box sx={{ display: "flex", gap: 2 }}>
                     <AvatarIcon username={comment.username} />
                     <DisplayAuthor entity={comment} />
 
@@ -83,29 +104,53 @@ const CommentListCard: React.FC<Props> = ({ comment, isUser, onUpdate, onDelete 
                                     Update
                                 </Button>
                                 : <Box>
-                                    <EditButton<Comment> entity={comment} updateEntity={(_) => setIsUpdate(true)} />
-                                    <DeleteButton<Comment> entity={comment} onDelete={onDelete} />
+                                    <EditButton<Comment>
+                                        entity={comment}
+                                        updateEntity={(_) => setIsUpdate(true)}
+                                    />
+                                    <DeleteButton<Comment>
+                                        entity={comment}
+                                        onDelete={onDelete}
+                                    />
                                 </Box>}
                         </Box>}
                 </Box>
 
-                <Box sx={{ display: "flex", flexDirection: "row", marginTop: "8px" }}>
+                <Box sx={{ display: "flex", marginTop: "8px" }}>
                     <Divider orientation="vertical" flexItem sx={{ mx: 2 }} />
 
-                    {isUpdate ?
-                        <TextField
-                            id="comment"
-                            value={desc}
-                            autoComplete="off"
-                            autoFocus
-                            multiline
-                            fullWidth
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                        />
-                        : <Typography sx={{ whiteSpace: "pre-wrap" }}>
-                            {capitalize(comment.description)}
-                        </Typography>}
+                    <Box>
+                        {isUpdate ?
+                            <TextField
+                                id="comment"
+                                value={desc}
+                                autoComplete="off"
+                                autoFocus
+                                multiline
+                                fullWidth
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                            />
+                            : <Typography sx={{ whiteSpace: "pre-wrap" }}>
+                                {capitalize(comment.description)}
+                            </Typography>}
+
+
+                        <Box sx={{ display: "flex", mt: 1, gap: 1 }}>
+                            {["likes", "dislikes"].map((s: string) => (
+                                <VoteButton
+                                    type={s == "likes" ? "like" : "dislike"}
+                                    vote={comment.user_vote}
+                                    voteCount={s == "likes" ? comment.likes : comment.dislikes}
+                                    id={comment.comment_id}
+                                    entityType="comment"
+                                    onLike={onLike}
+                                    onDislike={onDislike}
+                                    onRemoveVote={onRemoveVote}
+                                />
+                            ))}
+                        </Box>
+                    </Box>
                 </Box>
             </CardContent>
         </Card>

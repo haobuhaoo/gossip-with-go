@@ -15,7 +15,8 @@ import { truncate } from "../utils/formatters";
 /**
  * Renders a post page that sends a `GET` request to fetch and display the specific post and all
  * its comments, a `POST` request to create a new comment, a `PUT` request to update an existing
- * post or comment and a `DELETE` request to delete a selected comment.
+ * post or comment and a `DELETE` request to delete a selected comment. It also sends a `POST`
+ * request to like and dislike a comment, and a `DELETE` request to remove the user's vote.
  */
 const PostPage: React.FC = () => {
     const topicId: string = useParams().topicId ?? "";
@@ -182,6 +183,84 @@ const PostPage: React.FC = () => {
             .finally(() => setOpenSnackBar(true));
     };
 
+    /**
+     * Sets a like on the entity (post or comment).
+     */
+    const onLike = (id: number, entityType: string) => {
+        setOpenSnackBar(false);
+        setMessage("");
+        setIsError(false);
+
+        axiosInstance.post(`/api/${entityType}s/${id}/likes`)
+            .then(res => {
+                if (res.data) {
+                    entityType == "comment"
+                        ? getAllComments(topicId, postId)
+                        : getPost(topicId, postId);
+                    setIsError(false);
+                    setMessage("Liked!");
+                }
+            })
+            .catch(err => {
+                console.error("unable to like " + entityType + ": " + err);
+                setIsError(true);
+                setMessage(err);
+            })
+            .finally(() => setOpenSnackBar(true));
+    };
+
+    /**
+     * Sets a dislike on the entity (post or comment).
+     */
+    const onDislike = (id: number, entityType: string) => {
+        setOpenSnackBar(false);
+        setMessage("");
+        setIsError(false);
+
+        axiosInstance.post(`/api/${entityType}s/${id}/dislikes`)
+            .then(res => {
+                if (res.data) {
+                    entityType == "comment"
+                        ? getAllComments(topicId, postId)
+                        : getPost(topicId, postId);
+                    setIsError(false);
+                    setMessage("Disliked!");
+                }
+            })
+            .catch(err => {
+                console.error("unable to dislike " + entityType + ": " + err);
+                setIsError(true);
+                setMessage(err);
+            })
+            .finally(() => setOpenSnackBar(true));
+    };
+
+    /**
+     * Removes the vote on the entity (post or comment).
+     */
+    const onRemoveVote = (id: number, entityType: string) => {
+        setOpenSnackBar(false);
+        setMessage("");
+        setIsError(false);
+
+        axiosInstance.delete(`/api/${entityType}s/${id}/remove`)
+            .then(res => {
+                if (res.data) {
+                    entityType == "comment"
+                        ? getAllComments(topicId, postId)
+                        : getPost(topicId, postId);
+                    setIsError(false);
+                    setMessage("Removed");
+                }
+            })
+            .catch(err => {
+                console.error("unable to remove vote on " + entityType + ": " + err);
+                setIsError(true);
+                setMessage(err);
+            })
+            .finally(() => setOpenSnackBar(true));
+    };
+
     useEffect(() => {
         setIsError(false);
         setMessage("");
@@ -202,7 +281,7 @@ const PostPage: React.FC = () => {
             <BackButton handleBack={handleBack} />
 
             <Typography variant="h4" gutterBottom sx={{ fontWeight: "bold", mt: "32px" }}>
-                Topic: {truncate(capitalize(post?.title ?? ""), 42)}
+                Post: {truncate(capitalize(post?.title ?? ""), 42)}
             </Typography>
 
             {post
@@ -213,6 +292,9 @@ const PostPage: React.FC = () => {
                     onCreate={onCreate}
                     onUpdate={onUpdate}
                     onDelete={onDelete}
+                    onLike={onLike}
+                    onDislike={onDislike}
+                    onRemoveVote={onRemoveVote}
                 />
                 : <EmptyList entity="post" />
             }

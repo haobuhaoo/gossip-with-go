@@ -43,6 +43,9 @@ func (s *svc) FindPostsByTopic(ctx context.Context, arg repo.FindPostsByTopicPar
 			Username:    row.Username,
 			Title:       row.Title,
 			Description: row.Description,
+			Likes:       row.Likes,
+			Dislikes:    row.Dislikes,
+			UserVote:    row.UserVote,
 			CreatedAt:   row.CreatedAt.Time,
 			UpdatedAt:   row.UpdatedAt.Time,
 		})
@@ -67,6 +70,9 @@ func (s *svc) FindPostByID(ctx context.Context, arg repo.FindPostByIDParams) (Po
 		Username:    rows.Username,
 		Title:       rows.Title,
 		Description: rows.Description,
+		Likes:       rows.Likes,
+		Dislikes:    rows.Dislikes,
+		UserVote:    rows.UserVote,
 		CreatedAt:   rows.CreatedAt.Time,
 		UpdatedAt:   rows.UpdatedAt.Time,
 	}
@@ -134,9 +140,46 @@ func (s *svc) SearchPost(ctx context.Context, arg repo.SearchPostParams) ([]Post
 			Username:    row.Username,
 			Title:       row.Title,
 			Description: row.Description,
+			Likes:       row.Likes,
+			Dislikes:    row.Dislikes,
+			UserVote:    row.UserVote,
 			CreatedAt:   row.CreatedAt.Time,
 			UpdatedAt:   row.UpdatedAt.Time,
 		})
 	}
 	return posts, nil
+}
+
+// LikesPost increments the like count for the specific post by 1 and returns the vote.
+func (s *svc) LikesPost(ctx context.Context, arg repo.LikesPostParams) (repo.PostVote, error) {
+	post, err := s.repo.LikesPost(ctx, arg)
+	if err != nil {
+		return repo.PostVote{}, err
+	}
+
+	return post, nil
+}
+
+// DislikesPost increments the dislike count for the specific post by 1 and returns the vote.
+func (s *svc) DislikesPost(ctx context.Context, arg repo.DislikesPostParams) (repo.PostVote, error) {
+	post, err := s.repo.DislikesPost(ctx, arg)
+	if err != nil {
+		return repo.PostVote{}, err
+	}
+
+	return post, nil
+}
+
+// RemovePostVote removes the user's vote for that specific post.
+func (s *svc) RemovePostVote(ctx context.Context, arg repo.RemovePostVoteParams) error {
+	delRows, err := s.repo.RemovePostVote(ctx, arg)
+	if err != nil {
+		return err
+	}
+
+	if delRows == 0 {
+		return ErrVoteNotFound
+	}
+
+	return nil
 }

@@ -7,8 +7,11 @@ import "github.com/go-chi/chi/v5"
 func Routes(router chi.Router, h *handler) {
 	router.Route("/comments", func(r chi.Router) {
 		r.Get("/all/{topicId}/{postId}", h.FindCommentsByPost)
+		r.Post("/{id}/likes", h.LikesComment)
+		r.Post("/{id}/dislikes", h.DislikesComment)
 		r.Post("/", h.CreateComment)
 		r.Put("/{id}", h.UpdateComment)
+		r.Delete("/{id}/remove", h.RemoveCommentVote)
 		r.Delete("/{id}", h.DeleteComment)
 	})
 }

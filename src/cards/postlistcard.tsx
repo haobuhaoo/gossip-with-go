@@ -7,6 +7,7 @@ import AvatarIcon from "../components/avataricon";
 import DeleteButton from "../components/deletebutton";
 import DisplayAuthor from "../components/displayauthor";
 import EditButton from "../components/editbutton";
+import VoteButton from "../components/votebutton";
 
 type Props = {
     /**
@@ -104,6 +105,19 @@ const PostListCard: React.FC<Props> = ({ post, isUser, handleClick, openPostModa
                     }}>
                     {capitalize(post.description)}
                 </Typography>
+
+                <Box sx={{ display: "flex", flexDirection: "row", mt: 2, gap: 1 }}>
+                    <VoteButton
+                        type="like"
+                        vote={1}
+                        voteCount={post.likes}
+                    />
+                    <VoteButton
+                        type="dislike"
+                        vote={-1}
+                        voteCount={post.dislikes}
+                    />
+                </Box>
             </CardContent>
         </Card>
     )

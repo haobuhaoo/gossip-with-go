@@ -211,9 +211,22 @@ func (q *Queries) DislikesPost(ctx context.Context, arg DislikesPostParams) (Pos
 }
 
 const findCommentsByPost = `-- name: FindCommentsByPost :many
-SELECT c.comment_id, c.user_id, u.name as username, c.post_id, c.description, c.created_at, c.updated_at
-FROM Comments c JOIN Users u ON u.user_id = c.user_id WHERE c.post_id = $1 ORDER BY c.updated_at DESC
+SELECT DISTINCT c.comment_id, c.user_id, u.name as username, c.post_id, c.description, c.created_at,
+c.updated_at, COUNT(v.vote) FILTER (WHERE v.vote = 1) OVER (PARTITION BY c.comment_id) AS likes,
+COUNT(v.vote) FILTER (WHERE v.vote = -1) OVER (PARTITION BY c.comment_id) AS dislikes,
+MAX(uv.vote) OVER (PARTITION BY c.comment_id) AS user_vote
+FROM Comments c
+JOIN Users u ON u.user_id = c.user_id
+LEFT JOIN Comment_Votes v ON c.comment_id = v.comment_id
+LEFT JOIN Comment_Votes uv ON c.comment_id = uv.comment_id AND uv.user_id = $2
+WHERE c.post_id = $1
+ORDER BY likes DESC, c.updated_at DESC
 `
+
+type FindCommentsByPostParams struct {
+	PostID int64 `json:"post_id"`
+	UserID int64 `json:"user_id"`
+}
 
 type FindCommentsByPostRow struct {
 	CommentID   int64              `json:"comment_id"`
@@ -223,11 +236,14 @@ type FindCommentsByPostRow struct {
 	Description string             `json:"description"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	Likes       int64              `json:"likes"`
+	Dislikes    int64              `json:"dislikes"`
+	UserVote    interface{}        `json:"user_vote"`
 }
 
 // Comments Queries
-func (q *Queries) FindCommentsByPost(ctx context.Context, postID int64) ([]FindCommentsByPostRow, error) {
-	rows, err := q.db.Query(ctx, findCommentsByPost, postID)
+func (q *Queries) FindCommentsByPost(ctx context.Context, arg FindCommentsByPostParams) ([]FindCommentsByPostRow, error) {
+	rows, err := q.db.Query(ctx, findCommentsByPost, arg.PostID, arg.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -243,6 +259,9 @@ func (q *Queries) FindCommentsByPost(ctx context.Context, postID int64) ([]FindC
 			&i.Description,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Likes,
+			&i.Dislikes,
+			&i.UserVote,
 		); err != nil {
 			return nil, err
 		}

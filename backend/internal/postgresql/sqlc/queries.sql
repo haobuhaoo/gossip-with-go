@@ -80,8 +80,16 @@ ORDER BY likes DESC, p.updated_at DESC;
 
 -- Comments Queries
 -- name: FindCommentsByPost :many
-SELECT c.comment_id, c.user_id, u.name as username, c.post_id, c.description, c.created_at, c.updated_at
-FROM Comments c JOIN Users u ON u.user_id = c.user_id WHERE c.post_id = $1 ORDER BY c.updated_at DESC;
+SELECT DISTINCT c.comment_id, c.user_id, u.name as username, c.post_id, c.description, c.created_at,
+c.updated_at, COUNT(v.vote) FILTER (WHERE v.vote = 1) OVER (PARTITION BY c.comment_id) AS likes,
+COUNT(v.vote) FILTER (WHERE v.vote = -1) OVER (PARTITION BY c.comment_id) AS dislikes,
+MAX(uv.vote) OVER (PARTITION BY c.comment_id) AS user_vote
+FROM Comments c
+JOIN Users u ON u.user_id = c.user_id
+LEFT JOIN Comment_Votes v ON c.comment_id = v.comment_id
+LEFT JOIN Comment_Votes uv ON c.comment_id = uv.comment_id AND uv.user_id = $2
+WHERE c.post_id = $1
+ORDER BY likes DESC, c.updated_at DESC;
 
 -- name: CreateComment :one
 INSERT INTO Comments (user_id, post_id, description) VALUES ($1, $2, $3) RETURNING *;

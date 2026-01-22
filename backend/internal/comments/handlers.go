@@ -20,6 +20,9 @@ const (
 	SuccessfulCreateCommentMessage     = "Successfully created comment"
 	SuccessfulUpdateCommentMessage     = "Successfully updated comment"
 	SuccessfulDeleteCommentMessage     = "Successfully deleted comment"
+	SuccessfulLikeCommentMessage       = "Successfully liked comment"
+	SuccessfulDislikeCommentMessage    = "Successfully disliked comment"
+	SuccessfulRemoveCommentVoteMessage = "Successfully removed vote"
 )
 
 // handler handles the comment related HTTP requests.
@@ -36,9 +39,9 @@ func NewHandler(service Service) *handler {
 	}
 }
 
-// FindCommentsByPost handles GET /api/comments/all//{topicId}/{postId} requests.
-// It parses the postId string, and passes it to the comment service to return all comments for that post,
-// and serializes the result into a JSON HTTP response.
+// FindCommentsByPost handles GET /api/comments/all/{topicId}/{postId} requests.
+// It parses the topicId and postId string, and passes it to the comment service to return all
+// comments for that post, and serializes the result into a JSON HTTP response.
 func (h *handler) FindCommentsByPost(w http.ResponseWriter, r *http.Request) {
 	topicIdStr := chi.URLParam(r, "topicId")
 	topicId, err := strconv.ParseInt(topicIdStr, 10, 64)
@@ -54,9 +57,16 @@ func (h *handler) FindCommentsByPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userId, ok := r.Context().Value("userID").(int64)
+	if !ok {
+		helper.WriteError(w, MissingUserIDMessage, http.StatusBadRequest)
+		return
+	}
+
 	req := repo.FindPostByIDParams{
-		TopicID: topicId,
 		PostID:  postId,
+		TopicID: topicId,
+		UserID:  userId,
 	}
 	comments, err := h.service.FindCommentsByPost(r.Context(), req)
 	if err != nil {
@@ -103,8 +113,8 @@ func (h *handler) CreateComment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	newComment := repo.CreateCommentParams{
-		PostID:      req.PostID,
 		UserID:      userId,
+		PostID:      req.PostID,
 		Description: req.Description,
 	}
 	comment, err := h.service.CreateComment(r.Context(), newComment)
@@ -214,5 +224,115 @@ func (h *handler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := helper.ParseResponseMessage(SuccessfulDeleteCommentMessage)
+	helper.Write(w, response)
+}
+
+// LikesComment handles POST /api/comments/{id}/likes requests.
+// It parses the id string and passes it to the comment service to increment a like count for that
+// specified comment, which then serializes the result into a JSON HTTP response.
+func (h *handler) LikesComment(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		helper.WriteError(w, InvalidCommentIdMessage, http.StatusBadRequest)
+		return
+	}
+
+	userId, ok := r.Context().Value("userID").(int64)
+	if !ok {
+		helper.WriteError(w, MissingUserIDMessage, http.StatusBadRequest)
+		return
+	}
+
+	arg := repo.LikesCommentParams{
+		CommentID: id,
+		UserID:    userId,
+	}
+	vote, err := h.service.LikesComment(r.Context(), arg)
+	if err != nil {
+		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	jsonVote, err := json.Marshal(vote)
+	if err != nil {
+		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	response := helper.ParseResponseDataAndMessage(jsonVote, SuccessfulLikeCommentMessage)
+	helper.Write(w, response)
+}
+
+// DislikesComment handles POST /api/comments/{id}/dislikes requests.
+// It parses the id string and passes it to the comment service to increment a dislike count for that
+// specified comment, which then serializes the result into a JSON HTTP response.
+func (h *handler) DislikesComment(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		helper.WriteError(w, InvalidCommentIdMessage, http.StatusBadRequest)
+		return
+	}
+
+	userId, ok := r.Context().Value("userID").(int64)
+	if !ok {
+		helper.WriteError(w, MissingUserIDMessage, http.StatusBadRequest)
+		return
+	}
+
+	arg := repo.DislikesCommentParams{
+		CommentID: id,
+		UserID:    userId,
+	}
+	vote, err := h.service.DislikesComment(r.Context(), arg)
+	if err != nil {
+		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	jsonVote, err := json.Marshal(vote)
+	if err != nil {
+		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	response := helper.ParseResponseDataAndMessage(jsonVote, SuccessfulDislikeCommentMessage)
+	helper.Write(w, response)
+}
+
+// RemoveCommentVote handles DELETE /api/comments/{id}/remove requests.
+// It parses the id string and passes it to the comment service to remove the vote count for that
+// specified comment, which then serializes the result into a JSON HTTP response.
+func (h *handler) RemoveCommentVote(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		helper.WriteError(w, InvalidCommentIdMessage, http.StatusBadRequest)
+		return
+	}
+
+	userId, ok := r.Context().Value("userID").(int64)
+	if !ok {
+		helper.WriteError(w, MissingUserIDMessage, http.StatusBadRequest)
+		return
+	}
+
+	arg := repo.RemoveCommentVoteParams{
+		CommentID: id,
+		UserID:    userId,
+	}
+	err = h.service.RemoveCommentVote(r.Context(), arg)
+	if err != nil {
+		if err == ErrVoteNotFound {
+			helper.WriteError(w, ErrVoteNotFound.Error(), http.StatusNotFound)
+			return
+		}
+
+		helper.WriteError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	response := helper.ParseResponseMessage(SuccessfulRemoveCommentVoteMessage)
 	helper.Write(w, response)
 }

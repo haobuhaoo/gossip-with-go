@@ -14,17 +14,23 @@ type Service interface {
 	CreateComment(ctx context.Context, arg repo.CreateCommentParams) (repo.Comment, error)
 	UpdateComment(ctx context.Context, arg repo.UpdateCommentParams) (repo.Comment, error)
 	DeleteComment(ctx context.Context, arg repo.DeleteCommentParams) error
+	LikesComment(ctx context.Context, arg repo.LikesCommentParams) (repo.CommentVote, error)
+	DislikesComment(ctx context.Context, arg repo.DislikesCommentParams) (repo.CommentVote, error)
+	RemoveCommentVote(ctx context.Context, arg repo.RemoveCommentVoteParams) error
 }
 
 // Comment model that is passed to the frontend.
 type Comment struct {
-	CommentID   int64     `json:"comment_id"`
-	PostID      int64     `json:"post_id"`
-	UserID      int64     `json:"user_id"`
-	Username    string    `json:"username"`
-	Description string    `json:"description"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	CommentID   int64       `json:"comment_id"`
+	PostID      int64       `json:"post_id"`
+	UserID      int64       `json:"user_id"`
+	Username    string      `json:"username"`
+	Description string      `json:"description"`
+	Likes       int64       `json:"likes"`
+	Dislikes    int64       `json:"dislikes"`
+	UserVote    interface{} `json:"user_vote"`
+	CreatedAt   time.Time   `json:"created_at"`
+	UpdatedAt   time.Time   `json:"updated_at"`
 }
 
 // CreateCommentRequest handles the comment related HTTP request body for creation of a new comment.

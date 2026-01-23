@@ -41,8 +41,13 @@ type dbConfig struct {
 func (app *application) mount() http.Handler {
 	r := chi.NewRouter()
 
+	frontendURL := os.Getenv("FRONTEND_URL")
+	if frontendURL == "" {
+		frontendURL = "http://localhost:5173"
+	}
+
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173"},
+		AllowedOrigins:   []string{frontendURL},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-type"},
 		AllowCredentials: true,
@@ -51,14 +56,18 @@ func (app *application) mount() http.Handler {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	repo := repo.New(app.db)
+	query := repo.New(app.db)
 
 	jwtSecret := os.Getenv("JWT_SECRET_KEY")
-	authService := auth.NewService(repo)
+	if jwtSecret == "" {
+		log.Fatal("JWT_SECRET_KEY not set")
+	}
+
+	authService := auth.NewService(query)
 	authHandler := auth.NewHandler(authService, jwtSecret)
 	auth.Routes(r, authHandler)
 
-	userService := users.NewService(repo)
+	userService := users.NewService(query)
 	userHandler := users.NewHandler(userService)
 	users.Routes(r, userHandler)
 
@@ -67,15 +76,15 @@ func (app *application) mount() http.Handler {
 
 		r.Get("/me", authHandler.AuthenticateUser)
 
-		topicService := topics.NewService(repo)
+		topicService := topics.NewService(query)
 		topicHandler := topics.NewHandler(topicService)
 		topics.Routes(r, topicHandler)
 
-		postService := posts.NewService(repo)
+		postService := posts.NewService(query)
 		postHandler := posts.NewHandler(postService)
 		posts.Routes(r, postHandler)
 
-		commentService := comments.NewService(repo, app.db)
+		commentService := comments.NewService(query, app.db)
 		commentHandler := comments.NewHandler(commentService)
 		comments.Routes(r, commentHandler)
 	})
@@ -94,7 +103,7 @@ func (app *application) run(h http.Handler) error {
 		IdleTimeout:  time.Minute,
 	}
 
-	log.Printf("Starting server at Port %s", svr.Addr)
+	log.Printf("Starting server at %s", svr.Addr)
 
 	return svr.ListenAndServe()
 }

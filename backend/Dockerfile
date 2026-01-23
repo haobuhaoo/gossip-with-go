@@ -18,7 +18,7 @@ ENV GOOSE_DRIVER=postgres
 RUN goose -dir ./internal/postgresql/migrations up
 
 # Build the Go binary
-RUN go build -tags netgo -ldflags '-s -w' -o app
+RUN go build -tags netgo -ldflags '-s -w' -o app ./main
 
 # Expose port
 EXPOSE 10000

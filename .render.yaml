@@ -1,13 +1,14 @@
 services:
   - type: web
     name: gossip-backend
-    env: docker
+    env: go
     plan: free
+    rootDirectory: backend
     buildCommand: |
       go install github.com/pressly/goose/v3/cmd/goose@latest
       goose up
-      go build -tags netgo -ldflags '-s -w' -o gwg
-    startCommand: ./gwg
+      go build -tags netgo -ldflags '-s -w' -o app
+    startCommand: ./app
     envVars:
       - key: GOOSE_DRIVER
         value: postgres
@@ -21,6 +22,3 @@ services:
         value: "10000"
       - key: FRONTEND_URL
         value: https://gossip-with-go.onrender.com
-    plan: free
-    env: go
-    goVersion: "1.25.5"

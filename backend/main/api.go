@@ -63,6 +63,10 @@ func (app *application) mount() http.Handler {
 		log.Fatal("JWT_SECRET_KEY not set")
 	}
 
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, frontendURL, http.StatusTemporaryRedirect)
+	})
+
 	authService := auth.NewService(query)
 	authHandler := auth.NewHandler(authService, jwtSecret)
 	auth.Routes(r, authHandler)

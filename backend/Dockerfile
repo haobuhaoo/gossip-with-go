@@ -13,7 +13,7 @@ COPY . .
 
 # Install goose and run migrations
 RUN go install github.com/pressly/goose/v3/cmd/goose@latest
-RUN goose -dir ./internal/postgresql/migrations GOOSE_DRIVER=postgres GOOSE_DBSTRING=$GOOSE_DBSTRING up
+RUN GOOSE_DRIVER=$GOOSE_DRIVER GOOSE_DBSTRING=$GOOSE_DBSTRING goose -dir ./internal/postgresql/migrations up
 
 # Build the Go binary
 RUN go build -tags netgo -ldflags '-s -w' -o app

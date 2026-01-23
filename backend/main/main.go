@@ -11,11 +11,19 @@ import (
 )
 
 func main() {
-	_ = godotenv.Load()
+	if os.Getenv("ENV") != "production" {
+		_ = godotenv.Load()
+	}
+
 	ctx := context.Background()
 
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000"
+	}
+
 	cfg := config{
-		addr: ":3000",
+		addr: ":" + port,
 		db: dbConfig{
 			dsn: os.Getenv("GOOSE_DBSTRING"),
 		},
@@ -26,7 +34,8 @@ func main() {
 
 	poolConfig, err := pgxpool.ParseConfig(cfg.db.dsn)
 	if err != nil {
-		panic(err)
+		slog.Error("Invalid DB DSN", "error", err)
+		os.Exit(1)
 	}
 
 	poolConfig.MaxConns = 25
@@ -36,11 +45,12 @@ func main() {
 
 	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
-		panic(err)
+		slog.Error("Failed to connect to database", "error", err)
+		os.Exit(1)
 	}
 	defer pool.Close()
 
-	slog.Info("Connected to database", "dsn", cfg.db.dsn)
+	slog.Info("Connected to database")
 
 	api := application{
 		config: cfg,

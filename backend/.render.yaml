@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: gossip-backend
+    env: docker
+    plan: free
+    buildCommand: |
+      go install github.com/pressly/goose/v3/cmd/goose@latest
+      goose up
+      go build -tags netgo -ldflags '-s -w' -o gwg
+    startCommand: ./gwg
+    envVars:
+      - key: GOOSE_DRIVER
+        value: postgres
+      - key: GOOSE_DBSTRING
+        value: postgresql://postgresql:PtQE7y7rRjJ18XK7RUtSOyXMW79wwCau@dpg-d5pl7kshg0os739ld8hg-a/gossip_with_go?sslmode=require
+      - key: GOOSE_MIGRATION_DIR
+        value: ./internal/postgresql/migrations
+      - key: JWT_SECRET_KEY
+        value: cfX6y6H0qjidR4rCNOygR26tz3SvPsjKTUVzwB137x5
+      - key: PORT
+        value: "10000"
+      - key: FRONTEND_URL
+        value: https://gossip-with-go.onrender.com
+    plan: free
+    env: go
+    goVersion: "1.25.5"

@@ -6,6 +6,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import type { Entity } from "../types/entity";
 
 import axiosInstance from "../utils/axiosInstance";
+import { isValidString } from "../utils/formatters";
 
 type Props<T extends Entity> = {
     /**
@@ -118,8 +119,15 @@ const SearchBar = <T extends Entity,>({
         setIsError(false);
         setMessage("");
 
+        if (!isValidString(query)) {
+            setMessage("Please enter a valid query");
+            setIsError(true);
+            setOpenSnackBar(true);
+            return;
+        }
+
         if (isTopic) {
-            axiosInstance.get(`/api/topics/search?q=${query}`)
+            axiosInstance.get(`/api/topics/search?q=${query.trim()}`)
                 .then(res => {
                     if (res.data) {
                         setEntity(res.data.payload?.data);
@@ -146,7 +154,7 @@ const SearchBar = <T extends Entity,>({
             return;
         }
 
-        axiosInstance.get(`/api/posts/${topicId}/search?q=${query}`)
+        axiosInstance.get(`/api/posts/${topicId}/search?q=${query.trim()}`)
             .then(res => {
                 if (res.data) {
                     setEntity(res.data.payload?.data);

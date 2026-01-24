@@ -89,10 +89,13 @@ const PostPage: React.FC = () => {
         setMessage("");
         setIsError(false);
 
-        axiosInstance.put(`/api/posts/${postId}`, { title, description })
+        axiosInstance.put(`/api/posts/${postId}`, {
+            title: title.trim(),
+            description: description.trim()
+        })
             .then(res => {
                 if (res.data) {
-                    setMessage("Updated " + capitalize(title));
+                    setMessage("Updated " + capitalize(title.trim()));
                     setIsError(false);
                     getPost(topicId, postId.toString());
                 }
@@ -115,7 +118,7 @@ const PostPage: React.FC = () => {
 
         axiosInstance.post("/api/comments", {
             postId: Number(postId),
-            description
+            description: description.trim()
         })
             .then(res => {
                 if (res.data) {
@@ -141,7 +144,10 @@ const PostPage: React.FC = () => {
         setMessage("");
         setIsError(false);
 
-        axiosInstance.put(`/api/comments/${commentId}`, { postId: commentPostId, description })
+        axiosInstance.put(`/api/comments/${commentId}`, {
+            postId: commentPostId,
+            description: description.trim()
+        })
             .then(res => {
                 if (res.data) {
                     setMessage("Comment updated!");

@@ -12,6 +12,8 @@ import DisplayAuthor from "../components/displayauthor";
 import EditButton from "../components/editbutton";
 import VoteButton from "../components/votebutton";
 
+import { isValidString } from "../utils/formatters";
+
 import EmptyList from "./emptylist";
 import CommentListCard from "./commentlistcard";
 
@@ -73,6 +75,7 @@ type Props = {
 const PostCard: React.FC<Props> = ({ post, commentList, openPostModal, onCreate, onUpdate,
     onDelete, onLike, onDislike, onRemoveVote }) => {
     const [comment, setComment] = useState<string>("");
+    const [error, setError] = useState<string>(" ");
     const { auth } = useAuth();
 
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,6 +84,11 @@ const PostCard: React.FC<Props> = ({ post, commentList, openPostModal, onCreate,
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+
+        if (!isValidString(comment)) {
+            setError("Please enter a valid comment");
+            return;
+        }
         onCreate(comment);
         setComment("");
     };
@@ -163,6 +171,8 @@ const PostCard: React.FC<Props> = ({ post, commentList, openPostModal, onCreate,
                         onChange={handleChange}
                         required
                         fullWidth
+                        error={error != " "}
+                        helperText={error}
                         sx={{ "& .MuiOutlinedInput-root": { borderRadius: 10, pl: 4 } }}
                         slotProps={{
                             input: {

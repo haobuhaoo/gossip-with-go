@@ -98,12 +98,12 @@ const TopicPage: React.FC = () => {
 
         axiosInstance.post("/api/posts", {
             topicId: Number(topicId),
-            title,
-            description
+            title: title.trim(),
+            description: description.trim()
         })
             .then(res => {
                 if (res.data) {
-                    setMessage("Created " + capitalize(title));
+                    setMessage("Created " + capitalize(title.trim()));
                     setIsError(false);
                     getAllPosts(topicId);
                 }
@@ -128,10 +128,13 @@ const TopicPage: React.FC = () => {
         setMessage("");
         setIsError(false);
 
-        axiosInstance.put(`/api/posts/${postId}`, { title, description })
+        axiosInstance.put(`/api/posts/${postId}`, {
+            title: title.trim(),
+            description: description.trim()
+        })
             .then(res => {
                 if (res.data) {
-                    setMessage("Updated " + capitalize(title));
+                    setMessage("Updated " + capitalize(title.trim()));
                     setIsError(false);
                     getAllPosts(topicId);
                 }
@@ -159,7 +162,7 @@ const TopicPage: React.FC = () => {
             .then(res => {
                 if (res.data) {
                     setIsError(false);
-                    setMessage("Deleted " + capitalize(p.title));
+                    setMessage("Deleted " + capitalize(p.title.trim()));
                     getAllPosts(topicId);
                 }
             })

@@ -5,6 +5,8 @@ import type { Topic } from "../types/entity";
 
 import CloseModalButton from "../components/closemodalbutton";
 
+import { isValidString } from "../utils/formatters";
+
 type Props = {
     /**
      * True if modal is open.
@@ -60,6 +62,11 @@ const TopicModal: React.FC<Props> = ({ open, close, topic, isUpdate, onCreate, o
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setError(" ");
+
+        if (!isValidString(newTopic)) {
+            setError("Please enter a valid topic");
+            return;
+        }
 
         if (isUpdate) {
             if (topic == null) {

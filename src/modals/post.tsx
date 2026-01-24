@@ -5,6 +5,8 @@ import type { Post } from "../types/entity";
 
 import CloseModalButton from "../components/closemodalbutton";
 
+import { isValidString } from "../utils/formatters";
+
 type Props = {
     /**
      * True if modal is open.
@@ -67,6 +69,16 @@ const PostModal: React.FC<Props> = ({ open, close, post, isUpdate, onCreate, onU
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setError(" ");
+
+        if (!isValidString(newTitle)) {
+            setError("Please enter a valid title");
+            return;
+        }
+
+        if (!isValidString(newDesc)) {
+            setError("Please enter a valid description");
+            return;
+        }
 
         if (isUpdate) {
             if (post == null) {

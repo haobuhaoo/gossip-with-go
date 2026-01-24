@@ -82,10 +82,10 @@ const HomePage: React.FC = () => {
         setMessage("");
         setIsError(false);
 
-        axiosInstance.post("/api/topics", { title: title.toLocaleLowerCase() })
+        axiosInstance.post("/api/topics", { title: title.trim().toLocaleLowerCase() })
             .then(res => {
                 if (res.data) {
-                    setMessage("Created " + capitalize(title));
+                    setMessage("Created " + capitalize(title.trim()));
                     setIsError(false);
                     getAllTopics();
                 }
@@ -110,10 +110,10 @@ const HomePage: React.FC = () => {
         setMessage("");
         setIsError(false);
 
-        axiosInstance.put(`/api/topics/${topicId}`, { title: title.toLocaleLowerCase() })
+        axiosInstance.put(`/api/topics/${topicId}`, { title: title.trim().toLocaleLowerCase() })
             .then(res => {
                 if (res.data) {
-                    setMessage("Updated " + capitalize(title));
+                    setMessage("Updated " + capitalize(title.trim()));
                     setIsError(false);
                     getAllTopics();
                 }
@@ -141,7 +141,7 @@ const HomePage: React.FC = () => {
             .then(res => {
                 if (res.data) {
                     setIsError(false);
-                    setMessage("Deleted " + capitalize(t.title));
+                    setMessage("Deleted " + capitalize(t.title.trim()));
                     getAllTopics();
                 }
             })

@@ -44,3 +44,11 @@ export function showLastUpdated(date: string): string {
 export function showInitial(username: string): string {
     return username?.slice(0, 2);
 }
+
+/**
+ * Returns true if `string` is not null and not empty after trimming leading and trailing spaces.
+ */
+export function isValidString(string: string): boolean {
+    const trimmed: string = string?.trim();
+    return trimmed != null && trimmed != "";
+}

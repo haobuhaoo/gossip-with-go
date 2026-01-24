@@ -17,6 +17,7 @@ Gossip With Go is a discussion platform where users can create topics, post cont
       - [1. Clone the Repository](#1-clone-the-repository)
       - [2. Frontend Setup (React + TypeScript)](#2-frontend-setup-react--typescript)
       - [3. Backend Setup (Go)](#3-backend-setup-go)
+    - [Using the application](#using-the-application)
     - [Available Scripts](#available-scripts)
     - [Troubleshooting](#troubleshooting)
   - [User Guide](#user-guide)
@@ -135,6 +136,12 @@ go run ./main
 ```
 The backend will be available at `http://localhost:3000`.
 
+### Using the application
+
+To access the protected routes, you need to login with a registerd username.
+
+You may use the username `cvwo` to login or register for an account via the register page.
+
 ---
 
 ### Available Scripts
@@ -184,7 +191,7 @@ The backend will be available at `http://localhost:3000`.
 
 - Click the **+ ADD** button at the top right corner of the screen to open the modal form.
 - Enter the topic title and click **ADD**.
-- The new topic will be appear in the topic list.
+- The new topic will appear in the topic list.
 
   **Note:**
   - The title must be a non-empty string.
@@ -211,7 +218,7 @@ The backend will be available at `http://localhost:3000`.
 #### Search Topic
 
 - Enter a query in the search bar and click **SEARCH**.
-- Topics with title containing the query will be displayed.
+- Topics with titles containing the query will be displayed.
 
   **Note:**
   - Click the **X** button to reset the topic list.
@@ -220,7 +227,7 @@ The backend will be available at `http://localhost:3000`.
 ---
 
 ### Posts
-- Posts are displayed in order of most likes, followed by most recent updated time.
+- Posts are displayed in order of most likes, followed by the most recent updated time.
 - Posts are truncated in the list view.
 - Click a post to view its full content and associated comments.
 
@@ -228,7 +235,7 @@ The backend will be available at `http://localhost:3000`.
 
 - Click the **+ ADD** button at the top right corner of the screen to open the modal form.
 - Enter the post title and description and click **ADD**.
-- The new post will be appear in the post list.
+- The new post will appear in the post list.
 
   **Note:**
   - Both the title and description must be a non-empty string.
@@ -237,7 +244,7 @@ The backend will be available at `http://localhost:3000`.
 
 - Click the **pencil** icon next to a post to open the update form.
 - Enter the new title and description and click **UPDATE**.
-- The updated post will be appear in the post list.
+- The updated post will appear in the post list.
 
   **Note:**
   - Only the author of the post can update it.
@@ -272,12 +279,12 @@ The backend will be available at `http://localhost:3000`.
 ---
 
 ### Comments
-- Comments are displayed in order of most likes, followed by most recent updated time.
+- Comments are displayed in order of most likes, followed by the most recent updated time.
 
 #### Add Comment
 
 - Enter your comment in the input field below the post and click **ADD**.
-- The new comment will be appear in the comment list.
+- The new comment will appear in the comment list.
 
   **Note:**
   - The comment must be a non-empty string.
@@ -286,7 +293,7 @@ The backend will be available at `http://localhost:3000`.
 
 - Click the **pencil** icon next to the comment to update it.
 - Update the text and click **UPDATE**.
-- The updated comment will be appear in the comment list.
+- The updated comment will appear in the comment list.
 
   **Note:**
   - Only the author of the comment can update it.

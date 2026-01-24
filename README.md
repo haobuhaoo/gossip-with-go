@@ -1,8 +1,12 @@
 # Gossip With Go
 Developer: haoyi
 
+## Overview:
+Gossip With Go is a discussion platform where users can create topics, post content, comment, and interact through likes and dislikes. Authentication is required to access most features.
+
 ## List of Contents:
 - [Gossip With Go](#gossip-with-go)
+  - [Overview:](#overview)
   - [List of Contents:](#list-of-contents)
   - [Prerequisites](#prerequisites)
   - [Getting Started](#getting-started)
@@ -305,7 +309,6 @@ The backend will be available at `http://localhost:3000`.
 
   **Note:**
   - Click the same button again will remove your reaction.
-
 
 ## Use of AI
 
